@@ -61,8 +61,11 @@ export default function Base64EncoderTool() {
         onChange={(e) => { setInput(e.target.value); setError(null); }}
         className="min-h-[140px] font-mono text-[13px]"
         placeholder={mode === "encode" ? "Enter plain text…" : "Enter Base64 string…"}
-        error={error || undefined}
+        
       />
+       {error && (
+        <p className="mt-2 text-[12px] text-[var(--mg-danger)]">{error}</p>
+      )}
 
       <div className="flex gap-2">
         <Button variant="primary" onClick={process} disabled={!input}>
