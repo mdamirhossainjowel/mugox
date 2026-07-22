@@ -69,6 +69,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
         </ThemeProvider>
         <GoogleAnalytics gaId="G-18M0NJK6YM" />
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5610861089372226"
+        crossOrigin="anonymous"></script>
       </body>
     </html>
   );
