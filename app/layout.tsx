@@ -60,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `(function(){var t=localStorage.getItem('mg-theme')||'system';var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t==='system'&&d)){document.documentElement.classList.add('dark')}})()`,
           }}
         />
+        <meta name="google-adsense-account" content="ca-pub-5610861089372226"></meta>
       </head>
       <body className="min-h-screen flex flex-col">
         <ThemeProvider>
