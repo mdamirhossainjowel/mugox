@@ -20,14 +20,14 @@ const toolComponents: Record<string, React.ComponentType> = {
   "word-to-pdf":     dynamic(() => import("@/tools/pdf/word-to-pdf"),     {  loading: () => <ToolLoadingState /> }),
   "pdf-ocr":     dynamic(() => import("@/tools/pdf/pdf-ocr"),     {  loading: () => <ToolLoadingState /> }),
   "pdf-to-word":     dynamic(() => import("@/tools/pdf/pdf-to-word"),     {  loading: () => <ToolLoadingState /> }),
-  "unlockpdf":     dynamic(() => import("@/tools/pdf/unlockpdf"),     {  loading: () => <ToolLoadingState /> }),
-  "protectpdf":     dynamic(() => import("@/tools/pdf/protectpdf"),     {  loading: () => <ToolLoadingState /> }),
+ // "unlockpdf":     dynamic(() => import("@/tools/pdf/unlockpdf"),     {  loading: () => <ToolLoadingState /> }),
+ // "protectpdf":     dynamic(() => import("@/tools/pdf/protectpdf"),     {  loading: () => <ToolLoadingState /> }),
 
   // Image tools
   "resize-image":   dynamic(() => import("@/tools/image/resize-image"), { loading: () => <ToolLoadingState /> }),
   "compress-image": dynamic(() => import("@/tools/image/compress-image"),{  loading: () => <ToolLoadingState /> }),
   "convert-to-webp":dynamic(() => import("@/tools/image/convert-to-webp"),{  loading: () => <ToolLoadingState /> }),
-  "background-remove-image":dynamic(() => import("@/tools/image/background-remove-image"),{  loading: () => <ToolLoadingState /> }),
+  //"background-remove-image":dynamic(() => import("@/tools/image/background-remove-image"),{  loading: () => <ToolLoadingState /> }),
   // Text tools
   "word-counter":   dynamic(() => import("@/tools/text/word-counter"),  {  loading: () => <ToolLoadingState /> }),
   "character-counter": dynamic(() => import("@/tools/text/character-counter"), {  loading: () => <ToolLoadingState /> }),

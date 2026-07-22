@@ -16,7 +16,7 @@ import base64Encoder from "@/tools/developer/base64-encoder/meta";
 import percentageCalculator from "@/tools/calculator/percentage-calculator/meta";
 import ageCalculator from "@/tools/calculator/age-calculator/meta";
 import bmiCalculator from "@/tools/calculator/bmi-calculator/meta";
-import backgroundImage from "@/tools/image/background-remove-image/meta";
+//mport backgroundImage from "@/tools/image/background-remove-image/meta";
 import jpgToPng from "@/tools/image/jpg-to-png/meta";
 
 import deletePdfPages from "@/tools/pdf/delete-pdf-pages/meta";
@@ -26,8 +26,8 @@ import splitPdf from "@/tools/pdf/split-pdf/meta";
 import wordTopdf from "@/tools/pdf/word-to-pdf/meta";
 import pdftoword from "@/tools/pdf/pdf-to-word/meta";
 import pdfocr from "@/tools/pdf/pdf-ocr/meta";
-import unlockpdf from "@/tools/pdf/unlockpdf/meta";
-import protectpdf from "@/tools/pdf/protectpdf/meta";
+//import unlockpdf from "@/tools/pdf/unlockpdf/meta";
+//import protectpdf from "@/tools/pdf/protectpdf/meta";
 
 export const TOOL_REGISTRY: ToolMeta[] = [
   compressPdf,
@@ -51,9 +51,9 @@ export const TOOL_REGISTRY: ToolMeta[] = [
   wordTopdf,
   pdfocr,
   pdftoword,
-  unlockpdf,
-  protectpdf,
-  backgroundImage,
+  //unlockpdf,
+  //protectpdf,
+ // backgroundImage,
   jpgToPng,
 ];
 

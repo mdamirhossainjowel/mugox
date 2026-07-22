@@ -10,7 +10,7 @@ import bmiCalculator from "@/tools/calculator/bmi-calculator/meta";
 import percentageCalculator from "@/tools/calculator/percentage-calculator/meta";
 import base64Encoder from "@/tools/developer/base64-encoder/meta";
 import jsonFormatter from "@/tools/developer/json-formatter/meta";
-import backgroundRemoveImage from "@/tools/image/background-remove-image/meta";
+//import backgroundRemoveImage from "@/tools/image/background-remove-image/meta";
 import compressImage from "@/tools/image/compress-image/meta";
 import convertToWebp from "@/tools/image/convert-to-webp/meta";
 import jpgToPng from "@/tools/image/jpg-to-png/meta";
@@ -22,10 +22,10 @@ import mergePdf from "@/tools/pdf/merge-pdf/meta";
 import pdfOcr from "@/tools/pdf/pdf-ocr/meta";
 import pdfToJpg from "@/tools/pdf/pdf-to-jpg/meta";
 import pdfToWord from "@/tools/pdf/pdf-to-word/meta";
-import protectpdf from "@/tools/pdf/protectpdf/meta";
+//import protectpdf from "@/tools/pdf/protectpdf/meta";
 import rotatePdf from "@/tools/pdf/rotate-pdf/meta";
 import splitPdf from "@/tools/pdf/split-pdf/meta";
-import unlockpdf from "@/tools/pdf/unlockpdf/meta";
+//import unlockpdf from "@/tools/pdf/unlockpdf/meta";
 import wordToPdf from "@/tools/pdf/word-to-pdf/meta";
 import caseConverter from "@/tools/text/case-converter/meta";
 import characterCounter from "@/tools/text/character-counter/meta";
@@ -37,7 +37,7 @@ export const TOOL_REGISTRY: ToolMeta[] = [
   percentageCalculator,
   base64Encoder,
   jsonFormatter,
-  backgroundRemoveImage,
+ // backgroundRemoveImage,
   compressImage,
   convertToWebp,
   jpgToPng,
@@ -49,10 +49,10 @@ export const TOOL_REGISTRY: ToolMeta[] = [
   pdfOcr,
   pdfToJpg,
   pdfToWord,
-  protectpdf,
+ // protectpdf,
   rotatePdf,
   splitPdf,
-  unlockpdf,
+ // unlockpdf,
   wordToPdf,
   caseConverter,
   characterCounter,
