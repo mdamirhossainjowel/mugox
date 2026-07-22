@@ -19,7 +19,7 @@ export const TOOL_COMPONENTS: Record<string, ComponentType> = {
   "background-remove-image": dynamic(() => import("@/tools/image/background-remove-image"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "compress-image": dynamic(() => import("@/tools/image/compress-image"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "convert-to-webp": dynamic(() => import("@/tools/image/convert-to-webp"), { ssr: false, loading: () => <ToolLoadingState /> }),
-    "jpg-to-png": dynamic(() => import("@/tools/image/jpg-to-png"), { ssr: false, loading: () => <ToolLoadingState /> }),
+  "jpg-to-png": dynamic(() => import("@/tools/image/jpg-to-png"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "resize-image": dynamic(() => import("@/tools/image/resize-image"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "compress-pdf": dynamic(() => import("@/tools/pdf/compress-pdf"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "delete-pdf-pages": dynamic(() => import("@/tools/pdf/delete-pdf-pages"), { ssr: false, loading: () => <ToolLoadingState /> }),

@@ -17,7 +17,7 @@ import percentageCalculator from "@/tools/calculator/percentage-calculator/meta"
 import ageCalculator from "@/tools/calculator/age-calculator/meta";
 import bmiCalculator from "@/tools/calculator/bmi-calculator/meta";
 import backgroundImage from "@/tools/image/background-remove-image/meta";
-import jpgToPdf from "@/tools/image/jpg-to-png/meta";
+import jpgToPng from "@/tools/image/jpg-to-png/meta";
 
 import deletePdfPages from "@/tools/pdf/delete-pdf-pages/meta";
 import imagesToPdf from "@/tools/pdf/images-to-pdf/meta";
@@ -54,7 +54,7 @@ export const TOOL_REGISTRY: ToolMeta[] = [
   unlockpdf,
   protectpdf,
   backgroundImage,
-  jpgToPdf,
+  jpgToPng,
 ];
 
 export function getToolBySlug(slug: string): ToolMeta | undefined {

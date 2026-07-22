@@ -13,6 +13,7 @@ import jsonFormatter from "@/tools/developer/json-formatter/meta";
 import backgroundRemoveImage from "@/tools/image/background-remove-image/meta";
 import compressImage from "@/tools/image/compress-image/meta";
 import convertToWebp from "@/tools/image/convert-to-webp/meta";
+import jpgToPng from "@/tools/image/jpg-to-png/meta";
 import resizeImage from "@/tools/image/resize-image/meta";
 import compressPdf from "@/tools/pdf/compress-pdf/meta";
 import deletePdfPages from "@/tools/pdf/delete-pdf-pages/meta";
@@ -29,7 +30,6 @@ import wordToPdf from "@/tools/pdf/word-to-pdf/meta";
 import caseConverter from "@/tools/text/case-converter/meta";
 import characterCounter from "@/tools/text/character-counter/meta";
 import wordCounter from "@/tools/text/word-counter/meta";
-import jpgToPdf from "@/tools/image/jpg-to-png/meta";
 
 export const TOOL_REGISTRY: ToolMeta[] = [
   ageCalculator,
@@ -40,6 +40,7 @@ export const TOOL_REGISTRY: ToolMeta[] = [
   backgroundRemoveImage,
   compressImage,
   convertToWebp,
+  jpgToPng,
   resizeImage,
   compressPdf,
   deletePdfPages,
@@ -56,5 +57,4 @@ export const TOOL_REGISTRY: ToolMeta[] = [
   caseConverter,
   characterCounter,
   wordCounter,
-  jpgToPdf,
 ];
