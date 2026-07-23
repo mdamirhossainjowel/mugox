@@ -10,7 +10,7 @@ import bmiCalculator from "@/tools/calculator/bmi-calculator/meta";
 import percentageCalculator from "@/tools/calculator/percentage-calculator/meta";
 import base64Encoder from "@/tools/developer/base64-encoder/meta";
 import jsonFormatter from "@/tools/developer/json-formatter/meta";
-//import backgroundRemoveImage from "@/tools/image/background-remove-image/meta";
+import backgroundRemoveimage from "@/tools/image/background-removeimage/meta";
 import compressImage from "@/tools/image/compress-image/meta";
 import convertToWebp from "@/tools/image/convert-to-webp/meta";
 import jpgToPng from "@/tools/image/jpg-to-png/meta";
@@ -20,24 +20,30 @@ import deletePdfPages from "@/tools/pdf/delete-pdf-pages/meta";
 import imagesToPdf from "@/tools/pdf/images-to-pdf/meta";
 import mergePdf from "@/tools/pdf/merge-pdf/meta";
 import pdfOcr from "@/tools/pdf/pdf-ocr/meta";
+import pdfPageNumbers from "@/tools/pdf/pdf-page-numbers/meta";
+import extractPdfPages from "@/tools/pdf/extract-pdf-pages/meta";
+
+
 import pdfToJpg from "@/tools/pdf/pdf-to-jpg/meta";
 import pdfToWord from "@/tools/pdf/pdf-to-word/meta";
-//import protectpdf from "@/tools/pdf/protectpdf/meta";
+import protectPdf from "@/tools/pdf/protect-pdf/meta";
 import rotatePdf from "@/tools/pdf/rotate-pdf/meta";
 import splitPdf from "@/tools/pdf/split-pdf/meta";
-//import unlockpdf from "@/tools/pdf/unlockpdf/meta";
+import unlockPdf from "@/tools/pdf/unlock-pdf/meta";
 import wordToPdf from "@/tools/pdf/word-to-pdf/meta";
 import caseConverter from "@/tools/text/case-converter/meta";
 import characterCounter from "@/tools/text/character-counter/meta";
+import removeDuplicateLines from "@/tools/text/remove-duplicate-lines/meta";
 import wordCounter from "@/tools/text/word-counter/meta";
 
 export const TOOL_REGISTRY: ToolMeta[] = [
+  extractPdfPages,
   ageCalculator,
   bmiCalculator,
   percentageCalculator,
   base64Encoder,
   jsonFormatter,
- // backgroundRemoveImage,
+  backgroundRemoveimage,
   compressImage,
   convertToWebp,
   jpgToPng,
@@ -47,14 +53,16 @@ export const TOOL_REGISTRY: ToolMeta[] = [
   imagesToPdf,
   mergePdf,
   pdfOcr,
+  pdfPageNumbers,
   pdfToJpg,
   pdfToWord,
- // protectpdf,
+  protectPdf,
   rotatePdf,
   splitPdf,
- // unlockpdf,
+  unlockPdf,
   wordToPdf,
   caseConverter,
   characterCounter,
+  removeDuplicateLines,
   wordCounter,
 ];

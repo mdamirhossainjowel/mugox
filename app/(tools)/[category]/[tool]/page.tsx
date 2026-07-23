@@ -20,18 +20,23 @@ const toolComponents: Record<string, React.ComponentType> = {
   "word-to-pdf":     dynamic(() => import("@/tools/pdf/word-to-pdf"),     {  loading: () => <ToolLoadingState /> }),
   "pdf-ocr":     dynamic(() => import("@/tools/pdf/pdf-ocr"),     {  loading: () => <ToolLoadingState /> }),
   "pdf-to-word":     dynamic(() => import("@/tools/pdf/pdf-to-word"),     {  loading: () => <ToolLoadingState /> }),
- // "unlockpdf":     dynamic(() => import("@/tools/pdf/unlockpdf"),     {  loading: () => <ToolLoadingState /> }),
- // "protectpdf":     dynamic(() => import("@/tools/pdf/protectpdf"),     {  loading: () => <ToolLoadingState /> }),
+  "pdf-page-numbers":     dynamic(() => import("@/tools/pdf/pdf-page-numbers"),     {  loading: () => <ToolLoadingState /> }),
+  "extract-pdf-pages":     dynamic(() => import("@/tools/pdf/extract-pdf-pages"),     {  loading: () => <ToolLoadingState /> }),
+
+  
+ //"unlock-pdf":     dynamic(() => import("@/tools/pdf/unlock-pdf"),     {  loading: () => <ToolLoadingState /> }),
+ //"protect-pdf":     dynamic(() => import("@/tools/pdf/protect-pdf"),     {  loading: () => <ToolLoadingState /> }),
 
   // Image tools
   "resize-image":   dynamic(() => import("@/tools/image/resize-image"), { loading: () => <ToolLoadingState /> }),
   "compress-image": dynamic(() => import("@/tools/image/compress-image"),{  loading: () => <ToolLoadingState /> }),
   "convert-to-webp":dynamic(() => import("@/tools/image/convert-to-webp"),{  loading: () => <ToolLoadingState /> }),
-  //"background-remove-image":dynamic(() => import("@/tools/image/background-remove-image"),{  loading: () => <ToolLoadingState /> }),
+  "background-removeimage":dynamic(() => import("@/tools/image/background-removeimage"),{  loading: () => <ToolLoadingState /> }),
   // Text tools
   "word-counter":   dynamic(() => import("@/tools/text/word-counter"),  {  loading: () => <ToolLoadingState /> }),
   "character-counter": dynamic(() => import("@/tools/text/character-counter"), {  loading: () => <ToolLoadingState /> }),
   "case-converter": dynamic(() => import("@/tools/text/case-converter"),{  loading: () => <ToolLoadingState /> }),
+  "remove-duplicate-lines": dynamic(() => import("@/tools/text/remove-duplicate-lines"),{  loading: () => <ToolLoadingState /> }),
   // Developer tools
   "json-formatter": dynamic(() => import("@/tools/developer/json-formatter"), {  loading: () => <ToolLoadingState /> }),
   "base64-encoder": dynamic(() => import("@/tools/developer/base64-encoder"), {  loading: () => <ToolLoadingState /> }),

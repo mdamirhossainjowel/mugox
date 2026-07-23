@@ -16,7 +16,7 @@ import base64Encoder from "@/tools/developer/base64-encoder/meta";
 import percentageCalculator from "@/tools/calculator/percentage-calculator/meta";
 import ageCalculator from "@/tools/calculator/age-calculator/meta";
 import bmiCalculator from "@/tools/calculator/bmi-calculator/meta";
-//mport backgroundImage from "@/tools/image/background-remove-image/meta";
+import backgroundImage from "@/tools/image/background-removeimage/meta";
 import jpgToPng from "@/tools/image/jpg-to-png/meta";
 
 import deletePdfPages from "@/tools/pdf/delete-pdf-pages/meta";
@@ -26,10 +26,22 @@ import splitPdf from "@/tools/pdf/split-pdf/meta";
 import wordTopdf from "@/tools/pdf/word-to-pdf/meta";
 import pdftoword from "@/tools/pdf/pdf-to-word/meta";
 import pdfocr from "@/tools/pdf/pdf-ocr/meta";
-//import unlockpdf from "@/tools/pdf/unlockpdf/meta";
-//import protectpdf from "@/tools/pdf/protectpdf/meta";
+//import unlockPdf from "@/tools/pdf/unlock-pdf/meta";
+//import protectPdf from "@/tools/pdf/protect-pdf/meta";
+import removeDuplicateLines from "@/tools/text/remove-duplicate-lines/meta";
+import pdfPageNumbers from "@/tools/pdf/pdf-page-numbers/meta";
+import extractPdfPages from "@/tools/pdf/extract-pdf-pages/meta";
+
+
+
+
 
 export const TOOL_REGISTRY: ToolMeta[] = [
+  extractPdfPages,
+  //unlockPdf,
+  pdfPageNumbers,
+  backgroundImage,
+  //protectPdf,
   compressPdf,
   mergePdf,
   pdfToJpg,
@@ -55,6 +67,7 @@ export const TOOL_REGISTRY: ToolMeta[] = [
   //protectpdf,
  // backgroundImage,
   jpgToPng,
+  removeDuplicateLines,
 ];
 
 export function getToolBySlug(slug: string): ToolMeta | undefined {
