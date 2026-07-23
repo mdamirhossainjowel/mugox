@@ -32,10 +32,10 @@ export const TOOL_COMPONENTS: Record<string, ComponentType> = {
   
   "pdf-to-jpg": dynamic(() => import("@/tools/pdf/pdf-to-jpg"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "pdf-to-word": dynamic(() => import("@/tools/pdf/pdf-to-word"), { ssr: false, loading: () => <ToolLoadingState /> }),
-  "protect-pdf": dynamic(() => import("@/tools/pdf/protect-pdf"), { ssr: false, loading: () => <ToolLoadingState /> }),
+  //"protect-pdf": dynamic(() => import("@/tools/pdf/protect-pdf"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "rotate-pdf": dynamic(() => import("@/tools/pdf/rotate-pdf"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "split-pdf": dynamic(() => import("@/tools/pdf/split-pdf"), { ssr: false, loading: () => <ToolLoadingState /> }),
-  "unlock-pdf": dynamic(() => import("@/tools/pdf/unlock-pdf"), { ssr: false, loading: () => <ToolLoadingState /> }),
+  //"unlock-pdf": dynamic(() => import("@/tools/pdf/unlock-pdf"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "word-to-pdf": dynamic(() => import("@/tools/pdf/word-to-pdf"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "case-converter": dynamic(() => import("@/tools/text/case-converter"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "character-counter": dynamic(() => import("@/tools/text/character-counter"), { ssr: false, loading: () => <ToolLoadingState /> }),

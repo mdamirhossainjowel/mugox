@@ -26,10 +26,10 @@ import extractPdfPages from "@/tools/pdf/extract-pdf-pages/meta";
 
 import pdfToJpg from "@/tools/pdf/pdf-to-jpg/meta";
 import pdfToWord from "@/tools/pdf/pdf-to-word/meta";
-import protectPdf from "@/tools/pdf/protect-pdf/meta";
+//import protectPdf from "@/tools/pdf/protect-pdf/meta";
 import rotatePdf from "@/tools/pdf/rotate-pdf/meta";
 import splitPdf from "@/tools/pdf/split-pdf/meta";
-import unlockPdf from "@/tools/pdf/unlock-pdf/meta";
+//import unlockPdf from "@/tools/pdf/unlock-pdf/meta";
 import wordToPdf from "@/tools/pdf/word-to-pdf/meta";
 import caseConverter from "@/tools/text/case-converter/meta";
 import characterCounter from "@/tools/text/character-counter/meta";
@@ -56,10 +56,10 @@ export const TOOL_REGISTRY: ToolMeta[] = [
   pdfPageNumbers,
   pdfToJpg,
   pdfToWord,
-  protectPdf,
+  //protectPdf,
   rotatePdf,
   splitPdf,
-  unlockPdf,
+  //unlockPdf,
   wordToPdf,
   caseConverter,
   characterCounter,
