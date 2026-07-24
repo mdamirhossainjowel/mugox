@@ -228,31 +228,7 @@ export async function buildFormattedWord(
     //--------------------------------------------------
 
     if (block.type === "image") {
-      try {
-        const response =
-          await fetch(block.src);
-
-        const buffer =
-          await response.arrayBuffer();
-
-        children.push(
-          new Paragraph({
-            children: [
-              new ImageRun({
-                data: buffer,
-
-                transformation: {
-                  width: 400,
-                  height: 300,
-                },
-              }),
-            ],
-          })
-        );
-      } catch {
-        // ignore broken image
-      }
-    }
+      continue;
   }
 
   //----------------------------------------------------
