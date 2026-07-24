@@ -17,7 +17,7 @@ const MARGIN = 40;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
 const MAX_Y = PAGE_HEIGHT - MARGIN;
 
-type Run = { text: string; bold: boolean; italic: boolean };
+type Run = { text: string; bold: boolean; italics: boolean };
 type Block =
   | { type: "heading"; level: 1 | 2 | 3; runs: Run[] }
   | { type: "paragraph"; runs: Run[] }
@@ -31,7 +31,7 @@ type Block =
  * This intentionally ignores font colors, alignment, and other rich
  * styling — the goal is faithful *text* reproduction, not pixel parity.
  */
-function collectRuns(node: Node, bold: boolean, italic: boolean, runs: Run[]) {
+function collectRuns(node: Node, bold: boolean, italics: boolean, runs: Run[]) {
   node.childNodes.forEach((child) => {
     if (child.nodeType === Node.TEXT_NODE) {
       const text = child.textContent || "";
@@ -122,7 +122,7 @@ function parseHtmlToBlocks(html: string): Block[] {
   return blocks;
 }
 
-function setFont(pdf: jsPDF, bold: boolean, italic: boolean) {
+function setFont(pdf: jsPDF, bold: boolean, italics: boolean) {
   const style = bold && italic ? "bolditalic" : bold ? "bold" : italic ? "italic" : "normal";
   pdf.setFont("times", style);
 }

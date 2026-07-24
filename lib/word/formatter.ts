@@ -137,7 +137,7 @@ export async function buildFormattedWord(
 
               font: options.fontFamily,
 
-              italic:
+              italics:
                 options.italicBody,
 
               size:
