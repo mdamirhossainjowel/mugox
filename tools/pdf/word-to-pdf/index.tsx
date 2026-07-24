@@ -123,7 +123,7 @@ function parseHtmlToBlocks(html: string): Block[] {
 }
 
 function setFont(pdf: jsPDF, bold: boolean, italics: boolean) {
-  const style = bold && italic ? "bolditalic" : bold ? "bold" : italic ? "italic" : "normal";
+  const style = bold && italics ? "bolditalic" : bold ? "bold" : italics ? "italics" : "normal";
   pdf.setFont("times", style);
 }
 

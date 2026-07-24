@@ -5,13 +5,13 @@ import {
   Header,
   HeadingLevel,
   Packer,
-  PageNumber,
+
   Paragraph,
   Table,
   TableCell,
   TableRow,
   TextRun,
-  ImageRun,
+
 } from "docx";
 
 import { ParsedBlock } from "./parser";
