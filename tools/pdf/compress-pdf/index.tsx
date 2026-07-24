@@ -156,6 +156,7 @@ export default function CompressPdfTool() {
               {error}
             </div>
           )}
+
           {/* Progress */}
           {processing && progress && (
             <p className="text-[12px] text-[var(--mg-ink-4)]">
