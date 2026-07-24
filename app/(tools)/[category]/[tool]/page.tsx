@@ -22,6 +22,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "pdf-to-word":     dynamic(() => import("@/tools/pdf/pdf-to-word"),     {  loading: () => <ToolLoadingState /> }),
   "pdf-page-numbers":     dynamic(() => import("@/tools/pdf/pdf-page-numbers"),     {  loading: () => <ToolLoadingState /> }),
   "extract-pdf-pages":     dynamic(() => import("@/tools/pdf/extract-pdf-pages"),     {  loading: () => <ToolLoadingState /> }),
+  "word-formatter": dynamic(() => import("@/tools/word/word-formatter"), { loading: () => <ToolLoadingState /> }),
 
   
  //"unlock-pdf":     dynamic(() => import("@/tools/pdf/unlock-pdf"),     {  loading: () => <ToolLoadingState /> }),

@@ -17,27 +17,23 @@ import jpgToPng from "@/tools/image/jpg-to-png/meta";
 import resizeImage from "@/tools/image/resize-image/meta";
 import compressPdf from "@/tools/pdf/compress-pdf/meta";
 import deletePdfPages from "@/tools/pdf/delete-pdf-pages/meta";
+import extractPdfPages from "@/tools/pdf/extract-pdf-pages/meta";
 import imagesToPdf from "@/tools/pdf/images-to-pdf/meta";
 import mergePdf from "@/tools/pdf/merge-pdf/meta";
 import pdfOcr from "@/tools/pdf/pdf-ocr/meta";
 import pdfPageNumbers from "@/tools/pdf/pdf-page-numbers/meta";
-import extractPdfPages from "@/tools/pdf/extract-pdf-pages/meta";
-
-
 import pdfToJpg from "@/tools/pdf/pdf-to-jpg/meta";
 import pdfToWord from "@/tools/pdf/pdf-to-word/meta";
-//import protectPdf from "@/tools/pdf/protect-pdf/meta";
 import rotatePdf from "@/tools/pdf/rotate-pdf/meta";
 import splitPdf from "@/tools/pdf/split-pdf/meta";
-//import unlockPdf from "@/tools/pdf/unlock-pdf/meta";
 import wordToPdf from "@/tools/pdf/word-to-pdf/meta";
 import caseConverter from "@/tools/text/case-converter/meta";
 import characterCounter from "@/tools/text/character-counter/meta";
 import removeDuplicateLines from "@/tools/text/remove-duplicate-lines/meta";
 import wordCounter from "@/tools/text/word-counter/meta";
+import wordFormatter from "@/tools/word/word-formatter/meta";
 
 export const TOOL_REGISTRY: ToolMeta[] = [
-  extractPdfPages,
   ageCalculator,
   bmiCalculator,
   percentageCalculator,
@@ -50,19 +46,19 @@ export const TOOL_REGISTRY: ToolMeta[] = [
   resizeImage,
   compressPdf,
   deletePdfPages,
+  extractPdfPages,
   imagesToPdf,
   mergePdf,
   pdfOcr,
   pdfPageNumbers,
   pdfToJpg,
   pdfToWord,
-  //protectPdf,
   rotatePdf,
   splitPdf,
-  //unlockPdf,
   wordToPdf,
   caseConverter,
   characterCounter,
   removeDuplicateLines,
   wordCounter,
+  wordFormatter,
 ];

@@ -17,6 +17,7 @@
     "@next/third-parties": "^16.2.11",
     "clsx": "^2.1.1",
     "docx": "^9.7.1",
+    "file-saver": "^2.0.5",
     "fuse.js": "^7.0.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",

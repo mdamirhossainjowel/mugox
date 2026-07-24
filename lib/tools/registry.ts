@@ -31,12 +31,14 @@ import pdfocr from "@/tools/pdf/pdf-ocr/meta";
 import removeDuplicateLines from "@/tools/text/remove-duplicate-lines/meta";
 import pdfPageNumbers from "@/tools/pdf/pdf-page-numbers/meta";
 import extractPdfPages from "@/tools/pdf/extract-pdf-pages/meta";
+import wordFormatter from "@/tools/word/word-formatter/meta";
 
 
 
 
 
 export const TOOL_REGISTRY: ToolMeta[] = [
+  wordFormatter,
   extractPdfPages,
   //unlockPdf,
   pdfPageNumbers,

@@ -13,6 +13,18 @@ export const CATEGORIES: ToolCategory[] = [
     darkTextColor: "#a5b4fc",
   },
   {
+  slug: "word",
+  name: "Word Tools",
+  description:
+    "Format, edit, convert, compare, and optimize Word documents — fast, free, and entirely in your browser.",
+  icon: "FileType",
+  color: "#2563eb",
+  bgColor: "#eff6ff",
+  textColor: "#1d4ed8",
+  darkBgColor: "#172554",
+  darkTextColor: "#93c5fd",
+},
+  {
     slug: "image",
     name: "Image Tools",
     description: "Resize, compress, convert, and edit images without losing quality.",

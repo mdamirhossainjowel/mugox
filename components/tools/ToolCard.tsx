@@ -10,6 +10,7 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 const categoryColors: Record<string, { bg: string; color: string }> = {
+  word:        { bg: "bg-[#eeeeff] dark:bg-[#1e1b4b]", color: "text-[#3730a3] dark:text-[#a5b4fc]" },
   pdf:        { bg: "bg-[#eeeeff] dark:bg-[#1e1b4b]", color: "text-[#3730a3] dark:text-[#a5b4fc]" },
   image:      { bg: "bg-[#dcfce7] dark:bg-[#052e16]", color: "text-[#14532d] dark:text-[#86efac]" },
   text:       { bg: "bg-[#fef3c7] dark:bg-[#1c1400]", color: "text-[#92400e] dark:text-[#fcd34d]" },
