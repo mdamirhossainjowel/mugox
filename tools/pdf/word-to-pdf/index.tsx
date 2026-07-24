@@ -44,12 +44,12 @@ function collectRuns(node: Node, bold: boolean, italics: boolean, runs: Run[]) {
     const el = child as HTMLElement;
     const tag = el.tagName.toLowerCase();
     const nextBold = bold || tag === "strong" || tag === "b";
-    const nextItalic = italic || tag === "em" || tag === "i";
+    const nextItalics = italics || tag === "em" || tag === "i";
     if (tag === "br") {
-      runs.push({ text: "\n", bold, italic });
+      runs.push({ text: "\n", bold, italics });
       return;
     }
-    collectRuns(el, nextBold, nextItalic, runs);
+    collectRuns(el, nextBold, nextItalics, runs);
   });
 }
 
@@ -161,7 +161,7 @@ function renderRuns(
       }
       const words = segment.split(/(\s+)/).filter((w) => w.length > 0);
       words.forEach((word) => {
-        setFont(pdf, run.bold, run.italic);
+        setFont(pdf, run.bold, run.italics);
         const width = pdf.getTextWidth(word);
         if (x + width > rightEdge && word.trim().length > 0) {
           y += lineHeight;
