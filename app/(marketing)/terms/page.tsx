@@ -38,7 +38,7 @@ const sections = [
   },
   {
     title: "Contact",
-    content: "Questions? Email legal@mymugox.com.",
+    content: "Questions? Email mymugox@gmail.com.",
   },
 ];
 

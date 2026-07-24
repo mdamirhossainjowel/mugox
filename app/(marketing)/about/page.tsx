@@ -82,8 +82,8 @@ export default function AboutPage() {
 
       <div className="text-center text-[13px] text-[var(--mg-ink-4)]">
         Have feedback or a tool request?{" "}
-        <a href="mailto:hello@mymugox.com" className="text-[var(--mg-brand)] hover:underline">
-          hello@mymugox.com
+        <a href="mailto:mymugox@gmail.com" className="text-[var(--mg-brand)] hover:underline">
+          mymugox@gmail.com
         </a>
       </div>
     </div>

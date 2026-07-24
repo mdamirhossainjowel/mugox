@@ -34,7 +34,7 @@ const sections = [
   {
     title: "Contact",
     content:
-      "Questions about this policy? Email us at privacy@mymugox.com.",
+      "Questions about this policy? Email us at mymugox@gmail.com.",
   },
 ];
 

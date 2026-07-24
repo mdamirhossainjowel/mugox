@@ -77,6 +77,9 @@ export function Footer() {
                 { href: "/about", label: "About" },
                 { href: "/privacy", label: "Privacy policy" },
                 { href: "/terms", label: "Terms of service" },
+                {href: "/contact", label: "Contact us"},
+                {href: "/disclaimer", label: "Disclaimer"},
+
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-[12px] text-[var(--mg-ink-3)] hover:text-[var(--mg-ink)] transition-colors">
