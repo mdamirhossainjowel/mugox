@@ -36,7 +36,7 @@ function collectRuns(node: Node, bold: boolean, italics: boolean, runs: Run[]) {
     if (child.nodeType === Node.TEXT_NODE) {
       const text = child.textContent || "";
       if (text.trim().length > 0 || text.includes(" ")) {
-        runs.push({ text, bold, italic });
+        runs.push({ text, bold, italics });
       }
       return;
     }
