@@ -230,6 +230,7 @@ export async function buildFormattedWord(
     if (block.type === "image") {
       continue;
   }
+}
 
   //----------------------------------------------------
   // Document
