@@ -309,21 +309,10 @@ export async function buildFormattedWord(
                   AlignmentType.CENTER,
 
                 children: [
-                  new TextRun({
-                    text:
-                      options.footer,
-                  }),
-
-                  ...(options.pageNumber
-                    ? [
-                        new TextRun(
-                          "   "
-                        ),
-
-                        PageNumber.CURRENT,
-                      ]
-                    : []),
-                ],
+  new TextRun({
+    text: options.footer,
+  }),
+],
               }),
             ],
           }),
