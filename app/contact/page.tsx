@@ -10,8 +10,8 @@ export default function ContactPage() {
       <h1 className="text-4xl font-bold mb-6">Contact Us</h1>
 
       <p className="text-lg text-gray-600 mb-8">
-        We'd love to hear from you! Whether you have a question, found a bug,
-        want to suggest a new tool, or simply want to say hello, we're here to
+        We&apos;d love to hear from you! Whether you have a question, found a bug,
+        want to suggest a new tool, or simply want to say hello, We&apos;re here to
         help.
       </p>
 
@@ -60,7 +60,7 @@ export default function ContactPage() {
           </h2>
 
           <p className="text-gray-600">
-            Have an idea for a useful online tool? We'd love to hear your
+            Have an idea for a useful online tool? We&apos;d love to hear your
             suggestions.
           </p>
         </div>
