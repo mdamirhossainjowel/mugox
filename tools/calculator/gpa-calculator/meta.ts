@@ -24,7 +24,7 @@ const meta: ToolMeta = {
 
   icon: "GraduationCap",
 
-  tags: ["education", "featured"],
+  tags: ["featured"],
 
   relatedTools: [
     "cgpa-calculator",
