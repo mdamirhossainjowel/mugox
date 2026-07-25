@@ -32,7 +32,6 @@ const meta: ToolMeta = {
   tags: [
     "featured",
     "popular",
-    "business",
   ],
 
   relatedTools: [
