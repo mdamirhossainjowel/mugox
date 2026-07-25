@@ -7,7 +7,15 @@ import type { ToolMeta } from "@/types";
 
 import ageCalculator from "@/tools/calculator/age-calculator/meta";
 import bmiCalculator from "@/tools/calculator/bmi-calculator/meta";
+import cgpaCalculator from "@/tools/calculator/cgpa-calculator/meta";
+import discountCalculator from "@/tools/calculator/discount-calculator/meta";
+import gpaCalculator from "@/tools/calculator/gpa-calculator/meta";
+import gstVatCalculator from "@/tools/calculator/gst-vat-calculator/meta";
+import loanEmiCalculator from "@/tools/calculator/loan-emi-calculator/meta";
+import mortgageCalculator from "@/tools/calculator/mortgage-calculator/meta";
 import percentageCalculator from "@/tools/calculator/percentage-calculator/meta";
+import salaryCalculator from "@/tools/calculator/salary-calculator/meta";
+import timeCalculator from "@/tools/calculator/time-calculator/meta";
 import base64Encoder from "@/tools/developer/base64-encoder/meta";
 import jsonFormatter from "@/tools/developer/json-formatter/meta";
 import backgroundRemoveimage from "@/tools/image/background-removeimage/meta";
@@ -36,7 +44,15 @@ import wordFormatter from "@/tools/word/word-formatter/meta";
 export const TOOL_REGISTRY: ToolMeta[] = [
   ageCalculator,
   bmiCalculator,
+  cgpaCalculator,
+  discountCalculator,
+  gpaCalculator,
+  gstVatCalculator,
+  loanEmiCalculator,
+  mortgageCalculator,
   percentageCalculator,
+  salaryCalculator,
+  timeCalculator,
   base64Encoder,
   jsonFormatter,
   backgroundRemoveimage,

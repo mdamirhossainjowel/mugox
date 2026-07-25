@@ -45,6 +45,14 @@ const toolComponents: Record<string, React.ComponentType> = {
   "percentage-calculator": dynamic(() => import("@/tools/calculator/percentage-calculator"), {  loading: () => <ToolLoadingState /> }),
   "age-calculator": dynamic(() => import("@/tools/calculator/age-calculator"), {  loading: () => <ToolLoadingState /> }),
   "bmi-calculator": dynamic(() => import("@/tools/calculator/bmi-calculator"), {  loading: () => <ToolLoadingState /> }),
+  "discount-calculator": dynamic(() => import("@/tools/calculator/discount-calculator"), { loading: () => <ToolLoadingState /> }),
+  "gst-vat-calculator": dynamic(() => import("@/tools/calculator/gst-vat-calculator"), { loading: () => <ToolLoadingState /> }),
+  "loan-emi-calculator": dynamic(() => import("@/tools/calculator/loan-emi-calculator"), { loading: () => <ToolLoadingState />}),
+  "mortgage-calculator": dynamic(() => import("@/tools/calculator/mortgage-calculator"), { loading: () => <ToolLoadingState /> }),
+  "salary-calculator": dynamic(() => import("@/tools/calculator/salary-calculator"), { loading: () => <ToolLoadingState /> }),
+  "gpa-calculator": dynamic(() => import("@/tools/calculator/gpa-calculator"), { loading: () => <ToolLoadingState />}),
+  "cgpa-calculator": dynamic(() => import("@/tools/calculator/cgpa-calculator"), { loading: () => <ToolLoadingState /> }),
+  "time-calculator": dynamic(() => import("@/tools/calculator/time-calculator"), { loading: () => <ToolLoadingState /> }),
 };
 
 function ToolLoadingState() {

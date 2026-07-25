@@ -33,11 +33,27 @@ import pdfPageNumbers from "@/tools/pdf/pdf-page-numbers/meta";
 import extractPdfPages from "@/tools/pdf/extract-pdf-pages/meta";
 import wordFormatter from "@/tools/word/word-formatter/meta";
 
-
+import discountCalculator from "@/tools/calculator/discount-calculator/meta";
+import gstVatCalculator from "@/tools/calculator/gst-vat-calculator/meta";
+import loanEmiCalculator from "@/tools/calculator/loan-emi-calculator/meta";
+import mortgageCalculator from "@/tools/calculator/mortgage-calculator/meta";
+import salaryCalculator from "@/tools/calculator/salary-calculator/meta";
+import gpaCalculator from "@/tools/calculator/gpa-calculator/meta";
+import cgpaCalculator from "@/tools/calculator/cgpa-calculator/meta";
+import timeCalculator from "@/tools/calculator/time-calculator/meta";
 
 
 
 export const TOOL_REGISTRY: ToolMeta[] = [
+
+  discountCalculator,
+  gstVatCalculator,
+  loanEmiCalculator,
+  mortgageCalculator,
+  salaryCalculator,
+  gpaCalculator,
+  cgpaCalculator,
+  timeCalculator,
   wordFormatter,
   extractPdfPages,
   //unlockPdf,
