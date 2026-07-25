@@ -28,7 +28,7 @@ const meta: ToolMeta = {
 
   icon: "GraduationCap",
 
-  tags: ["education", "featured"],
+  tags: ["featured"],
 
   relatedTools: [
     "gpa-calculator",
