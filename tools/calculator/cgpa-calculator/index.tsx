@@ -109,9 +109,9 @@ export default function CgpaCalculator() {
 
   const [customScale, setCustomScale] = useState(100);
 
-  const [semesters, setSemesters] = useState<Semester>([
-    createSemester(),
-  ]);
+  const [semesters, setSemesters] = useState<Semester[]>([
+  createSemester(),
+]);
 
   const current =
     system === "custom"
