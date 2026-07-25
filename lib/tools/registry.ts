@@ -41,12 +41,14 @@ import salaryCalculator from "@/tools/calculator/salary-calculator/meta";
 import gpaCalculator from "@/tools/calculator/gpa-calculator/meta";
 import cgpaCalculator from "@/tools/calculator/cgpa-calculator/meta";
 import timeCalculator from "@/tools/calculator/time-calculator/meta";
+import invoiceGenerator from "@/tools/business/invoice-generator/meta";
 
 
 
 export const TOOL_REGISTRY: ToolMeta[] = [
 
   discountCalculator,
+  invoiceGenerator,
   gstVatCalculator,
   loanEmiCalculator,
   mortgageCalculator,

@@ -36,7 +36,7 @@ const meta: ToolMeta = {
   ],
 
   relatedTools: [
-    "loan-emi-calculator",
+    "mortgage-calculator",
     "salary-calculator",
     "gst-vat-calculator",
   ],

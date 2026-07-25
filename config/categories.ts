@@ -47,6 +47,17 @@ export const CATEGORIES: ToolCategory[] = [
     darkTextColor: "#fcd34d",
   },
   {
+    slug: "business",
+    name: "Business Tools",
+    description: "Count words, convert case, remove duplicates, and manipulate text instantly.",
+    icon: "Type",
+    color: "#d97706",
+    bgColor: "#fef3c7",
+    textColor: "#92400e",
+    darkBgColor: "#1c1400",
+    darkTextColor: "#fcd34d",
+  },
+  {
     slug: "developer",
     name: "Developer Tools",
     description: "Format JSON, encode Base64, validate HTML, and more developer utilities.",

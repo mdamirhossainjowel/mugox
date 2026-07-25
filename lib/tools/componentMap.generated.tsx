@@ -11,6 +11,7 @@ import type { ComponentType } from "react";
 import { ToolLoadingState } from "@/components/tools/ToolLoadingState";
 
 export const TOOL_COMPONENTS: Record<string, ComponentType> = {
+  "invoice-generator": dynamic(() => import("@/tools/business/invoice-generator"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "age-calculator": dynamic(() => import("@/tools/calculator/age-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "bmi-calculator": dynamic(() => import("@/tools/calculator/bmi-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "cgpa-calculator": dynamic(() => import("@/tools/calculator/cgpa-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
@@ -46,13 +47,4 @@ export const TOOL_COMPONENTS: Record<string, ComponentType> = {
   "remove-duplicate-lines": dynamic(() => import("@/tools/text/remove-duplicate-lines"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "word-counter": dynamic(() => import("@/tools/text/word-counter"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "word-formatter": dynamic(() => import("@/tools/word/word-formatter"), { ssr: false, loading: () => <ToolLoadingState /> }),
-  "discount-calculator": dynamic(() => import("@/tools/calculator/discount-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
-  "gst-vat-calculator": dynamic(() => import("@/tools/calculator/gst-vat-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
-  "loan-emi-calculator": dynamic(() => import("@/tools/calculator/loan-emi-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
-  "mortgage-calculator": dynamic(() => import("@/tools/calculator/mortgage-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
-  "salary-calculator": dynamic(() => import("@/tools/calculator/salary-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
-  "gpa-calculator": dynamic(() => import("@/tools/calculator/gpa-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
-  "cgpa-calculator": dynamic(() => import("@/tools/calculator/cgpa-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
-  "grade-calculator": dynamic(() => import("@/tools/calculator/grade-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
-  "time-calculator": dynamic(() => import("@/tools/calculator/time-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
 };

@@ -5,6 +5,7 @@
 
 import type { ToolMeta } from "@/types";
 
+import invoiceGenerator from "@/tools/business/invoice-generator/meta";
 import ageCalculator from "@/tools/calculator/age-calculator/meta";
 import bmiCalculator from "@/tools/calculator/bmi-calculator/meta";
 import cgpaCalculator from "@/tools/calculator/cgpa-calculator/meta";
@@ -42,6 +43,7 @@ import wordCounter from "@/tools/text/word-counter/meta";
 import wordFormatter from "@/tools/word/word-formatter/meta";
 
 export const TOOL_REGISTRY: ToolMeta[] = [
+  invoiceGenerator,
   ageCalculator,
   bmiCalculator,
   cgpaCalculator,

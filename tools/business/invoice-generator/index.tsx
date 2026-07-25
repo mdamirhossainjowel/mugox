@@ -1,1537 +1,1197 @@
 "use client";
-
-import { useMemo, useRef, useState Plus,
-Trash2,
-Package,} from "react";
-
-import Image from "next/image";
-
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import html2canvas from "html2canvas"; 
+import QRCode from "qrcode";
+import { jsPDF } from "jspdf";
 import {
-  Building2,
-  User,
-  Receipt,
-  Calendar,
+  Plus,
+  Trash2,
+  Copy,
+  ArrowUp,
+  ArrowDown,
+  Download,
+  Printer,
+  Save,
   Upload,
   RotateCcw,
+  AlertCircle,
+  Loader2,
+  Eraser,
+  ImagePlus,
 } from "lucide-react";
-
 import { Button } from "@/components/ui/Button";
+import { Input, Textarea } from "@/components/ui/Input";
+import { track } from "@/lib/analytics/track";
+import { generateId } from "@/lib/utils/generateId";
 
-import {
-  track,
-  EVENTS,
-} from "@/lib/analytics/track";
-type CompanyInfo = {
+/* =====================================================================
+   TYPES
+===================================================================== */
+
+interface Currency {
+  code: string;
+  symbol: string;
+  decimals: number;
+  label: string;
+}
+
+type InvoiceStatus = "draft" | "pending" | "paid" | "unpaid" | "cancelled";
+type DiscountType = "percent" | "fixed";
+type PaymentMethod = "bank" | "paypal" | "stripe" | "wise" | "cash" | "card";
+type TemplateId = "modern" | "minimal" | "corporate" | "dark";
+
+interface ProductLine {
+  id: string;
+  name: string;
+  description: string;
+  qty: number;
+  unitPrice: number;
+  discountPercent: number;
+  taxPercent: number;
+  sku: string;
+}
+
+interface CompanyInfo {
   name: string;
   address: string;
   phone: string;
   email: string;
   website: string;
-};
+  taxId: string;
+  regNumber: string;
+  logoDataUrl: string;
+}
 
-type ClientInfo = {
+interface ClientInfo {
   name: string;
   company: string;
   address: string;
-  phone: string;
   email: string;
-};
+  phone: string;
+  taxNumber: string;
+}
 
-type InvoiceInfo = {
-  invoiceNo: string;
+interface PaymentFields {
+  accountName: string;
+  accountNumber: string;
+  bankName: string;
+  swift: string;
+  iban: string;
+  routingNumber: string;
+  payoutId: string; // used for paypal/stripe/wise handle or email
+}
+
+interface InvoiceData {
+  company: CompanyInfo;
+  client: ClientInfo;
+  invoiceNumber: string;
   issueDate: string;
   dueDate: string;
+  status: InvoiceStatus;
+  items: ProductLine[];
+  currencyCode: string;
+  taxLabel: string;
+  taxCountry: string;
+  discountType: DiscountType;
+  discountValue: number;
+  shipping: number;
+  handling: number;
+  otherCharges: number;
+  notes: string;
+  thankYouMessage: string;
+  additionalMessage: string;
+  paymentMethod: PaymentMethod;
+  payment: PaymentFields;
+  companySignature: string;
+  customerSignature: string;
+  qrValue: string;
+  template: TemplateId;
+}
+
+/* =====================================================================
+   CONSTANTS
+===================================================================== */
+
+const CURRENCIES: Currency[] = [
+  { code: "USD", symbol: "$", decimals: 2, label: "US Dollar" },
+  { code: "EUR", symbol: "€", decimals: 2, label: "Euro" },
+  { code: "GBP", symbol: "£", decimals: 2, label: "British Pound" },
+  { code: "BDT", symbol: "৳", decimals: 2, label: "Bangladeshi Taka" },
+  { code: "INR", symbol: "₹", decimals: 2, label: "Indian Rupee" },
+  { code: "CNY", symbol: "¥", decimals: 2, label: "Chinese Yuan" },
+  { code: "JPY", symbol: "¥", decimals: 0, label: "Japanese Yen" },
+  { code: "AED", symbol: "د.إ", decimals: 2, label: "UAE Dirham" },
+  { code: "SAR", symbol: "﷼", decimals: 2, label: "Saudi Riyal" },
+  { code: "QAR", symbol: "﷼", decimals: 2, label: "Qatari Riyal" },
+  { code: "MYR", symbol: "RM", decimals: 2, label: "Malaysian Ringgit" },
+  { code: "SGD", symbol: "S$", decimals: 2, label: "Singapore Dollar" },
+  { code: "THB", symbol: "฿", decimals: 2, label: "Thai Baht" },
+  { code: "CAD", symbol: "C$", decimals: 2, label: "Canadian Dollar" },
+  { code: "AUD", symbol: "A$", decimals: 2, label: "Australian Dollar" },
+];
+
+interface TaxPreset {
+  country: string;
+  label: string;
+  rate: number;
+}
+
+const TAX_PRESETS: TaxPreset[] = [
+  { country: "Germany", label: "VAT", rate: 19 },
+  { country: "United Kingdom", label: "VAT", rate: 20 },
+  { country: "United States", label: "Sales Tax", rate: 0 },
+  { country: "Bangladesh", label: "VAT", rate: 15 },
+  { country: "India", label: "GST", rate: 18 },
+  { country: "China", label: "VAT", rate: 13 },
+  { country: "United Arab Emirates", label: "VAT", rate: 5 },
+  { country: "Saudi Arabia", label: "VAT", rate: 15 },
+  { country: "Custom", label: "Tax", rate: 0 },
+];
+
+const PAYMENT_METHODS: { id: PaymentMethod; label: string }[] = [
+  { id: "bank", label: "Bank Transfer" },
+  { id: "paypal", label: "PayPal" },
+  { id: "stripe", label: "Stripe" },
+  { id: "wise", label: "Wise" },
+  { id: "cash", label: "Cash" },
+  { id: "card", label: "Credit Card" },
+];
+
+const STATUS_OPTIONS: { id: InvoiceStatus; label: string; color: string; bg: string }[] = [
+  { id: "draft", label: "Draft", color: "#6b7280", bg: "#f3f4f6" },
+  { id: "pending", label: "Pending", color: "#b45309", bg: "#fef3c7" },
+  { id: "paid", label: "Paid", color: "#15803d", bg: "#dcfce7" },
+  { id: "unpaid", label: "Unpaid", color: "#b91c1c", bg: "#fee2e2" },
+  { id: "cancelled", label: "Cancelled", color: "#71717a", bg: "#f4f4f5" },
+];
+
+interface TemplateStyle {
+  id: TemplateId;
+  label: string;
+  bg: string;
+  ink: string;
+  inkSoft: string;
+  accent: string;
+  accentSoft: string;
+  border: string;
+  font: string;
+  headingWeight: string;
+}
+
+const TEMPLATES: Record<TemplateId, TemplateStyle> = {
+  modern: {
+    id: "modern",
+    label: "Modern",
+    bg: "#ffffff",
+    ink: "#111827",
+    inkSoft: "#6b7280",
+    accent: "#5b5ef4",
+    accentSoft: "#eeeeff",
+    border: "#e5e7eb",
+    font: "system-ui, -apple-system, sans-serif",
+    headingWeight: "800",
+  },
+  minimal: {
+    id: "minimal",
+    label: "Minimal",
+    bg: "#ffffff",
+    ink: "#18181b",
+    inkSoft: "#71717a",
+    accent: "#18181b",
+    accentSoft: "#f4f4f5",
+    border: "#e4e4e7",
+    font: "Georgia, 'Times New Roman', serif",
+    headingWeight: "400",
+  },
+  corporate: {
+    id: "corporate",
+    label: "Corporate",
+    bg: "#ffffff",
+    ink: "#1e293b",
+    inkSoft: "#64748b",
+    accent: "#0f766e",
+    accentSoft: "#ccfbf1",
+    border: "#cbd5e1",
+    font: "Georgia, 'Times New Roman', serif",
+    headingWeight: "700",
+  },
+  dark: {
+    id: "dark",
+    label: "Dark",
+    bg: "#111827",
+    ink: "#f9fafb",
+    inkSoft: "#9ca3af",
+    accent: "#818cf8",
+    accentSoft: "#312e81",
+    border: "#374151",
+    font: "system-ui, -apple-system, sans-serif",
+    headingWeight: "800",
+  },
 };
-type InvoiceItem = {
-  id: number;
-  name: string;
-  description: string;
-  qty: number;
-  price: number;
-  discount: number;
-  tax: number;
-};
-const [company, setCompany] = useState<CompanyInfo>({
-  name: "",
-  address: "",
-  phone: "",
-  email: "",
-  website: "",
-});
 
-const [client, setClient] = useState<ClientInfo>({
-  name: "",
-  company: "",
-  address: "",
-  phone: "",
-  email: "",
-});
+const STORAGE_KEY_COUNTER = "mugox_invoice_counter";
 
-const [invoice, setInvoice] = useState<InvoiceInfo>({
-  invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
-  issueDate: new Date().toISOString().split("T")[0],
-  dueDate: new Date().toISOString().split("T")[0],
-});
-const [logo, setLogo] = useState<string | null>(null);
 
-const logoInputRef =
-  useRef<HTMLInputElement>(null);
-  const handleLogoUpload = (
-  e: React.ChangeEvent<HTMLInputElement>
-) => {
-  const file = e.target.files?.[0];
 
-  if (!file) return;
+/* =====================================================================
+   PURE HELPERS (calculation, formatting, id/number generation)
+===================================================================== */
 
-  const reader = new FileReader();
+function getCurrency(code: string): Currency {
+  return CURRENCIES.find((c) => c.code === code) ?? CURRENCIES[0];
+}
 
-  reader.onload = () => {
-    setLogo(reader.result as string);
-
-    track(EVENTS.TOOL_STARTED, {
-      tool: "invoice-generator",
-      action: "logo-upload",
-    });
-  };
-
-  reader.readAsDataURL(file);
-};
-const reset = () => {
-  setCompany({
-    name: "",
-    address: "",
-    phone: "",
-    email: "",
-    website: "",
+function formatMoney(amount: number, currency: Currency): string {
+  const safe = Number.isFinite(amount) ? amount : 0;
+  const n = safe.toLocaleString("en-US", {
+    minimumFractionDigits: currency.decimals,
+    maximumFractionDigits: currency.decimals,
   });
+  return `${currency.symbol}${n}`;
+}
 
-  setClient({
-    name: "",
-    company: "",
-    address: "",
-    phone: "",
-    email: "",
-  });
+function computeItem(item: ProductLine) {
+  const base = item.qty * item.unitPrice;
+  const discountAmt = base * (item.discountPercent / 100);
+  const taxable = base - discountAmt;
+  const taxAmt = taxable * (item.taxPercent / 100);
+  const total = taxable + taxAmt;
+  return { base, discountAmt, taxable, taxAmt, total };
+}
 
-  setInvoice({
-    invoiceNo: `INV-${Date.now()
-      .toString()
-      .slice(-6)}`,
-    issueDate:
-      new Date()
-        .toISOString()
-        .split("T")[0],
-    dueDate:
-      new Date()
-        .toISOString()
-        .split("T")[0],
-  });
+function computeInvoiceTotals(data: InvoiceData) {
+  const lines = data.items.map((item) => ({ item, calc: computeItem(item) }));
+  const subtotal = lines.reduce((s, l) => s + l.calc.base, 0);
+  const itemDiscountTotal = lines.reduce((s, l) => s + l.calc.discountAmt, 0);
+  const taxTotal = lines.reduce((s, l) => s + l.calc.taxAmt, 0);
+  const afterItemDiscount = subtotal - itemDiscountTotal;
+  const invoiceDiscountAmt =
+    data.discountType === "percent" ? afterItemDiscount * (data.discountValue / 100) : data.discountValue;
+  const grandTotal =
+    afterItemDiscount - invoiceDiscountAmt + taxTotal + data.shipping + data.handling + data.otherCharges;
+  return { lines, subtotal, itemDiscountTotal, taxTotal, invoiceDiscountAmt, grandTotal };
+}
 
-  setLogo(null);
+function nextInvoiceNumber(): string {
+  const year = new Date().getFullYear();
+  let seq = 1;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY_COUNTER);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed && parsed.year === year && typeof parsed.seq === "number") {
+      seq = parsed.seq + 1;
+    }
+    window.localStorage.setItem(STORAGE_KEY_COUNTER, JSON.stringify({ year, seq }));
+  } catch {
+    // localStorage unavailable — fall back to seq 1 without persistence.
+  }
+  return `INV-${year}-${String(seq).padStart(4, "0")}`;
+}
 
-  track(EVENTS.TOOL_STARTED, {
-    tool: "invoice-generator",
-    action: "reset",
-  });
-};
-const updateCompany = (
-  field: keyof CompanyInfo,
-  value: string
-) => {
-  setCompany((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
-};
-
-const updateClient = (
-  field: keyof ClientInfo,
-  value: string
-) => {
-  setClient((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
-};
-
-const updateInvoice = (
-  field: keyof InvoiceInfo,
-  value: string
-) => {
-  setInvoice((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
-};
-const [items, setItems] = useState<InvoiceItem[]>([
-  {
-    id: 1,
+function emptyItem(): ProductLine {
+  return {
+    id: generateId(),
     name: "",
     description: "",
     qty: 1,
-    price: 0,
-    discount: 0,
-    tax: 0,
-  },
-]);
-const addItem = () => {
-  setItems((prev) => [
-    ...prev,
-    {
-      id: Date.now(),
-      name: "",
-      description: "",
-      qty: 1,
-      price: 0,
-      discount: 0,
-      tax: 0,
-    },
-  ]);
-};
+    unitPrice: 0,
+    discountPercent: 0,
+    taxPercent: 0,
+    sku: "",
+  };
+}
 
-const removeItem = (id: number) => {
-  if (items.length === 1) return;
+function defaultInvoice(): InvoiceData {
+  const today = new Date();
+  const due = new Date(today);
+  due.setDate(due.getDate() + 14);
+  const toInputDate = (d: Date) => d.toISOString().slice(0, 10);
 
-  setItems((prev) =>
-    prev.filter((item) => item.id !== id)
+  return {
+    company: { name: "", address: "", phone: "", email: "", website: "", taxId: "", regNumber: "", logoDataUrl: "" },
+    client: { name: "", company: "", address: "", email: "", phone: "", taxNumber: "" },
+    invoiceNumber: "",
+    issueDate: toInputDate(today),
+    dueDate: toInputDate(due),
+    status: "draft",
+    items: [emptyItem()],
+    currencyCode: "USD",
+    taxLabel: "Tax",
+    taxCountry: "Custom",
+    discountType: "percent",
+    discountValue: 0,
+    shipping: 0,
+    handling: 0,
+    otherCharges: 0,
+    notes: "",
+    thankYouMessage: "Thank you for your business!",
+    additionalMessage: "",
+    paymentMethod: "bank",
+    payment: { accountName: "", accountNumber: "", bankName: "", swift: "", iban: "", routingNumber: "", payoutId: "" },
+    companySignature: "",
+    customerSignature: "",
+    qrValue: "",
+    template: "modern",
+  };
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/* =====================================================================
+   SMALL UI PIECES (kept in this file — no separate component files)
+===================================================================== */
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="p-4 bg-[var(--mg-bg-1)] rounded-xl border border-[var(--mg-border)] space-y-3">
+      <h3 className="text-xs font-bold uppercase tracking-wide text-[var(--mg-ink-3)]">{title}</h3>
+      {children}
+    </div>
   );
-};
+}
 
-const updateItem = (
-  id: number,
-  field: keyof InvoiceItem,
-  value: string | number
-) => {
-  setItems((prev) =>
-    prev.map((item) =>
-      item.id === id
-        ? {
-            ...item,
-            [field]: value,
-          }
-        : item
-    )
+function FileToDataUrl({
+  label,
+  value,
+  onChange,
+  accept = "image/png,image/jpeg,image/webp",
+}: {
+  label: string;
+  value: string;
+  onChange: (dataUrl: string) => void;
+  accept?: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (file: File | undefined) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => onChange(String(reader.result || ""));
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-[var(--mg-ink-2)] mb-1.5">{label}</label>
+      <div className="flex items-center gap-3">
+        {value ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={value} alt={label} className="w-14 h-14 rounded-lg object-contain border border-[var(--mg-border)] bg-white" />
+        ) : (
+          <div className="w-14 h-14 rounded-lg border border-dashed border-[var(--mg-border-2)] flex items-center justify-center text-[var(--mg-ink-4)]">
+            <ImagePlus className="w-5 h-5" />
+          </div>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          className="hidden"
+          onChange={(e) => handleFile(e.target.files?.[0])}
+        />
+        <Button variant="secondary" size="sm" onClick={() => inputRef.current?.click()}>
+          <Upload className="w-3.5 h-3.5" /> Upload
+        </Button>
+        {value && (
+          <Button variant="ghost" size="sm" onClick={() => onChange("")}>
+            <Trash2 className="w-3.5 h-3.5" /> Remove
+          </Button>
+        )}
+      </div>
+    </div>
   );
-};
-const subtotal = useMemo(() => {
-  return items.reduce((sum, item) => {
-    const total =
-      item.qty * item.price;
-
-    const discount =
-      total * (item.discount / 100);
-
-    const tax =
-      (total - discount) *
-      (item.tax / 100);
-
-    return (
-      sum +
-      total -
-      discount +
-      tax
-    );
-  }, 0);
-}, [items]);
-const [shipping, setShipping] = useState(0);
-
-const [extraDiscount, setExtraDiscount] = useState(0);
-
-const [currency, setCurrency] = useState("USD");
-
-const [notes, setNotes] = useState("");
-
-const [terms, setTerms] = useState(
-  "Payment is due within the due date."
-);
-const currencies = [
-  "USD",
-  "EUR",
-  "GBP",
-  "BDT",
-  "CNY",
-  "JPY",
-  "INR",
-  "AED",
-];
-const grandTotal = useMemo(() => {
-  return subtotal + shipping - extraDiscount;
-}, [
-  subtotal,
-  shipping,
-  extraDiscount,
-]);
-
-return (
-
-<div className="space-y-8">
-
-{/* Header */}
-
-<div className="flex flex-col gap-3">
-
-<div className="flex items-center gap-3">
-
-<div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--mg-brand-bg)]">
-
-<Receipt className="h-7 w-7 text-[var(--mg-brand)]"/>
-
-</div>
-
-<div>
-
-<h1 className="text-3xl font-bold">
-
-Invoice Generator
-
-</h1>
-
-<p className="text-sm text-[var(--mg-ink-4)]">
-
-Create professional invoices with your company branding.
-
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-{/* Logo */}
-
-<div className="rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-bg-1)] p-6">
-
-<h2 className="mb-5 text-lg font-semibold">
-
-Company Logo
-
-</h2>
-
-<div className="flex flex-col gap-5 md:flex-row md:items-center">
-
-<div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[var(--mg-border)] bg-white">
-
-{logo ? (
-
-<Image
-
-src={logo}
-
-alt="Company Logo"
-
-width={140}
-
-height={140}
-
-className="object-contain"
-
-/>
-
-) : (
-
-<span className="text-xs text-[var(--mg-ink-4)]">
-
-No Logo
-
-</span>
-
-)}
-
-</div>
-
-<div className="space-y-3">
-
-<input
-
-type="file"
-
-accept=".png,.jpg,.jpeg,.webp"
-
-hidden
-
-ref={logoInputRef}
-
-onChange={handleLogoUpload}
-
-/>
-
-<Button
-
-variant="primary"
-
-onClick={()=>
-
-logoInputRef.current?.click()
-
 }
 
->
+function SignaturePad({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (dataUrl: string) => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawing = useRef(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-<Upload className="h-4 w-4"/>
+  const getCtx = () => canvasRef.current?.getContext("2d") ?? null;
 
-Upload Logo
+  const pointerPos = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
 
-</Button>
+  const start = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    drawing.current = true;
+    const ctx = getCtx();
+    const { x, y } = pointerPos(e);
+    if (ctx) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+  };
 
-<p className="text-xs text-[var(--mg-ink-4)]">
+  const move = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawing.current) return;
+    const ctx = getCtx();
+    const { x, y } = pointerPos(e);
+    if (ctx) {
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "#111827";
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+    setHasDrawn(true);
+  };
 
-PNG, JPG or WEBP
+  const end = () => {
+    drawing.current = false;
+    const canvas = canvasRef.current;
+    if (canvas && hasDrawn) onChange(canvas.toDataURL("image/png"));
+  };
 
-</p>
+  const clear = () => {
+    const canvas = canvasRef.current;
+    const ctx = getCtx();
+    if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawn(false);
+    onChange("");
+  };
 
-</div>
+  const handleUpload = (file: File | undefined) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => onChange(String(reader.result || ""));
+    reader.readAsDataURL(file);
+  };
 
-</div>
-
-</div>
-<div className="rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-bg-1)] p-6">
-
-<div className="mb-5 flex items-center gap-2">
-
-<Calendar className="h-5 w-5 text-[var(--mg-brand)]"/>
-
-<h2 className="text-lg font-semibold">
-
-Invoice Information
-
-</h2>
-
-</div>
-
-<div className="grid gap-5 md:grid-cols-3">
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Invoice Number
-
-</label>
-
-<input
-
-value={invoice.invoiceNo}
-
-onChange={(e)=>
-
-updateInvoice(
-
-"invoiceNo",
-
-e.target.value
-
-)
-
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-[var(--mg-ink-2)] mb-1.5">{label}</label>
+      {value ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={value} alt={label} className="h-20 border border-[var(--mg-border)] rounded-lg bg-white" />
+      ) : (
+        <canvas
+          ref={canvasRef}
+          width={280}
+          height={90}
+          className="border border-[var(--mg-border)] rounded-lg bg-white touch-none cursor-crosshair"
+          onPointerDown={start}
+          onPointerMove={move}
+          onPointerUp={end}
+          onPointerLeave={end}
+        />
+      )}
+      <div className="flex items-center gap-2 mt-2">
+        <Button variant="ghost" size="sm" onClick={clear}>
+          <Eraser className="w-3.5 h-3.5" /> Clear
+        </Button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          onChange={(e) => handleUpload(e.target.files?.[0])}
+        />
+        <Button variant="ghost" size="sm" onClick={() => inputRef.current?.click()}>
+          <Upload className="w-3.5 h-3.5" /> Upload instead
+        </Button>
+      </div>
+    </div>
+  );
 }
 
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Issue Date
-
-</label>
-
-<input
-
-type="date"
-
-value={invoice.issueDate}
-
-onChange={(e)=>
-
-updateInvoice(
-
-"issueDate",
-
-e.target.value
-
-)
-
-}
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Due Date
-
-</label>
-
-<input
-
-type="date"
-
-value={invoice.dueDate}
-
-onChange={(e)=>
-
-updateInvoice(
-
-"dueDate",
-
-e.target.value
-
-)
-
-}
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-</div>
-
-</div>
-{/* Company + Client */}
-
-<div className="grid gap-6 lg:grid-cols-2">
-
-{/* Company */}
-
-<div className="rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-bg-1)] p-6">
-
-<div className="mb-5 flex items-center gap-2">
-
-<Building2 className="h-5 w-5 text-[var(--mg-brand)]"/>
-
-<h2 className="text-lg font-semibold">
-
-Company Information
-
-</h2>
-
-</div>
-
-<div className="space-y-4">
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Company Name
-
-</label>
-
-<input
-
-value={company.name}
-
-onChange={(e)=>
-
-updateCompany(
-
-"name",
-
-e.target.value
-
-)
-
-}
-
-placeholder="Your Company"
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Address
-
-</label>
-
-<textarea
-
-rows={3}
-
-value={company.address}
-
-onChange={(e)=>
-
-updateCompany(
-
-"address",
-
-e.target.value
-
-)
-
-}
-
-placeholder="Company Address"
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Phone
-
-</label>
-
-<input
-
-value={company.phone}
-
-onChange={(e)=>
-
-updateCompany(
-
-"phone",
-
-e.target.value
-
-)
-
-}
-
-placeholder="+880..."
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Email
-
-</label>
-
-<input
-
-type="email"
-
-value={company.email}
-
-onChange={(e)=>
-
-updateCompany(
-
-"email",
-
-e.target.value
-
-)
-
-}
-
-placeholder="company@email.com"
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Website
-
-</label>
-
-<input
-
-value={company.website}
-
-onChange={(e)=>
-
-updateCompany(
-
-"website",
-
-e.target.value
-
-)
-
-}
-
-placeholder="https://example.com"
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-</div>
-
-</div>
-
-{/* Client */}
-
-<div className="rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-bg-1)] p-6">
-
-<div className="mb-5 flex items-center gap-2">
-
-<User className="h-5 w-5 text-[var(--mg-brand)]"/>
-
-<h2 className="text-lg font-semibold">
-
-Bill To
-
-</h2>
-
-</div>
-
-<div className="space-y-4">
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Client Name
-
-</label>
-
-<input
-
-value={client.name}
-
-onChange={(e)=>
-
-updateClient(
-
-"name",
-
-e.target.value
-
-)
-
-}
-
-placeholder="Client Name"
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Company
-
-</label>
-
-<input
-
-value={client.company}
-
-onChange={(e)=>
-
-updateClient(
-
-"company",
-
-e.target.value
-
-)
-
-}
-
-placeholder="Client Company"
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Address
-
-</label>
-
-<textarea
-
-rows={3}
-
-value={client.address}
-
-onChange={(e)=>
-
-updateClient(
-
-"address",
-
-e.target.value
-
-)
-
-}
-
-placeholder="Client Address"
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Phone
-
-</label>
-
-<input
-
-value={client.phone}
-
-onChange={(e)=>
-
-updateClient(
-
-"phone",
-
-e.target.value
-
-)
-
-}
-
-placeholder="+880..."
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Email
-
-</label>
-
-<input
-
-type="email"
-
-value={client.email}
-
-onChange={(e)=>
-
-updateClient(
-
-"email",
-
-e.target.value
-
-)
-
-}
-
-placeholder="client@email.com"
-
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-
-/>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-<div className="rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-bg-1)] p-6">
-
-<div className="mb-5 flex items-center justify-between">
-
-<div className="flex items-center gap-2">
-
-<Package className="h-5 w-5 text-[var(--mg-brand)]"/>
-
-<h2 className="text-lg font-semibold">
-
-Products / Services
-
-</h2>
-
-</div>
-
-<Button
-variant="primary"
-onClick={addItem}
->
-
-<Plus className="h-4 w-4"/>
-
-Add Item
-
-</Button>
-
-</div>
-{/* Actions */}
-
-<div className="flex flex-wrap gap-3">
-
-  <Button
-    variant="ghost"
-    onClick={reset}
-  >
-    <RotateCcw className="h-4 w-4" />
-    Reset
-  </Button>
-
-  <Button
-    variant="primary"
-    onClick={() => {
-      track(EVENTS.TOOL_STARTED, {
-        tool: "invoice-generator",
-        action: "generate",
+/* =====================================================================
+   MAIN COMPONENT
+===================================================================== */
+
+export default function InvoiceGeneratorTool() {
+  const [data, setData] = useState<InvoiceData>(() => defaultInvoice());
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const loadInputRef = useRef<HTMLInputElement>(null);
+
+  // Assign the first auto invoice number on mount (client-only — avoids SSR/CSR mismatch).
+  useEffect(() => {
+    setData((d) => (d.invoiceNumber ? d : { ...d, invoiceNumber: nextInvoiceNumber() }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Regenerate the QR image whenever its target text changes.
+  useEffect(() => {
+    if (!data.qrValue.trim()) {
+      setQrDataUrl("");
+      return;
+    }
+    let cancelled = false;
+    QRCode.toDataURL(data.qrValue, { margin: 1, width: 160 })
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQrDataUrl("");
       });
+    return () => {
+      cancelled = true;
+    };
+  }, [data.qrValue]);
 
-      alert(
-        "Invoice Preview will be available in Part 4."
-      );
-    }}
-  >
-    <Receipt className="h-4 w-4" />
-    Generate Invoice
-  </Button>
-  <div className="space-y-6">
+  const currency = useMemo(() => getCurrency(data.currencyCode), [data.currencyCode]);
+  const totals = useMemo(() => computeInvoiceTotals(data), [data]);
+  const template = TEMPLATES[data.template];
 
-{items.map((item) => (
+  const validate = useCallback((): string[] => {
+    const errs: string[] = [];
+    if (!data.company.name.trim()) errs.push("Company name is required.");
+    if (!data.client.name.trim()) errs.push("Client name is required.");
+    if (data.items.length === 0 || data.items.every((i) => !i.name.trim()))
+      errs.push("Add at least one product or service.");
+    if (data.company.email && !EMAIL_RE.test(data.company.email)) errs.push("Company email looks invalid.");
+    if (data.client.email && !EMAIL_RE.test(data.client.email)) errs.push("Client email looks invalid.");
+    if (data.dueDate && data.issueDate && data.dueDate < data.issueDate)
+      errs.push("Due date is before the issue date.");
+    return errs;
+  }, [data]);
 
-<div
-key={item.id}
-className="rounded-xl border border-[var(--mg-border)] p-5"
->
+  /* ---------- field update helpers ---------- */
 
-<div className="grid gap-4 lg:grid-cols-2">
-  {/* Summary */}
+  const update = <K extends keyof InvoiceData>(key: K, value: InvoiceData[K]) =>
+    setData((d) => ({ ...d, [key]: value }));
 
-<div className="mt-8 flex justify-end">
+  const updateCompany = <K extends keyof CompanyInfo>(key: K, value: CompanyInfo[K]) =>
+    setData((d) => ({ ...d, company: { ...d.company, [key]: value } }));
 
-  <div className="w-full max-w-md rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-brand-bg)] p-6">
+  const updateClient = <K extends keyof ClientInfo>(key: K, value: ClientInfo[K]) =>
+    setData((d) => ({ ...d, client: { ...d.client, [key]: value } }));
 
-    <div className="flex items-center justify-between">
+  const updatePayment = <K extends keyof PaymentFields>(key: K, value: PaymentFields[K]) =>
+    setData((d) => ({ ...d, payment: { ...d.payment, [key]: value } }));
 
-      <span className="text-sm font-medium">
+  /* ---------- line items ---------- */
 
-        Items
+  const addItem = () => setData((d) => ({ ...d, items: [...d.items, emptyItem()] }));
 
-      </span>
+  const removeItem = (id: string) =>
+    setData((d) => ({ ...d, items: d.items.length > 1 ? d.items.filter((i) => i.id !== id) : d.items }));
 
-      <span className="font-semibold">
+  const duplicateItem = (id: string) =>
+    setData((d) => {
+      const idx = d.items.findIndex((i) => i.id === id);
+      if (idx === -1) return d;
+      const copy = { ...d.items[idx], id: generateId() };
+      const items = [...d.items];
+      items.splice(idx + 1, 0, copy);
+      return { ...d, items };
+    });
 
-        {items.length}
+  const moveItem = (id: string, dir: -1 | 1) =>
+    setData((d) => {
+      const idx = d.items.findIndex((i) => i.id === id);
+      const target = idx + dir;
+      if (idx === -1 || target < 0 || target >= d.items.length) return d;
+      const items = [...d.items];
+      [items[idx], items[target]] = [items[target], items[idx]];
+      return { ...d, items };
+    });
 
-      </span>
+  const updateItem = (id: string, patch: Partial<ProductLine>) =>
+    setData((d) => ({
+      ...d,
+      items: d.items.map((i) => (i.id === id ? { ...i, ...patch } : i)),
+    }));
 
+  /* ---------- tax preset ---------- */
+
+  const applyTaxPreset = (country: string) => {
+    const preset = TAX_PRESETS.find((p) => p.country === country) ?? TAX_PRESETS[TAX_PRESETS.length - 1];
+    setData((d) => ({ ...d, taxCountry: preset.country, taxLabel: preset.label }));
+  };
+
+  /* ---------- export / print / save / load ---------- */
+
+  const exportPdf = async (orientation: "portrait" | "landscape") => {
+    const errs = validate();
+    setErrors(errs);
+    if (errs.length > 0 || !previewRef.current) return;
+
+    setExporting(true);
+    try {
+      const canvas = await html2canvas(previewRef.current, { scale: 2, backgroundColor: "#ffffff" });
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+
+      let imgW = pageW;
+      let imgH = (canvas.height * imgW) / canvas.width;
+      if (imgH > pageH) {
+        imgH = pageH;
+        imgW = (canvas.width * imgH) / canvas.height;
+      }
+
+      pdf.addImage(imgData, "PNG", (pageW - imgW) / 2, 0, imgW, imgH);
+      pdf.save(`${data.invoiceNumber || "invoice"}.pdf`);
+      track("invoice_pdf_downloaded", { orientation, template: data.template, currency: data.currencyCode });
+    } catch {
+      setErrors(["Couldn't generate the PDF. Try again, or use Print instead."]);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handlePrint = () => {
+    const errs = validate();
+    setErrors(errs);
+    if (errs.length > 0) return;
+    track("invoice_printed", { template: data.template });
+    window.print();
+  };
+
+  const handleSave = () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${data.invoiceNumber || "invoice"}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    track("invoice_saved", { template: data.template });
+  };
+
+  const handleLoad = (file: File | undefined) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result));
+        // Merge over defaults so an older/partial JSON file doesn't crash the UI.
+        setData({ ...defaultInvoice(), ...parsed });
+        setErrors([]);
+        track("invoice_loaded", {});
+      } catch {
+        setErrors(["That file isn't a valid saved invoice (.json)."]);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const startNew = () => {
+    setData(defaultInvoice());
+    setErrors([]);
+  };
+
+  const generatedOnce = useRef(false);
+  useEffect(() => {
+    if (!generatedOnce.current && data.company.name && data.client.name) {
+      generatedOnce.current = true;
+      track("invoice_generated", { template: data.template });
+    }
+  }, [data.company.name, data.client.name, data.template]);
+
+  const activePaymentFields = () => {
+    switch (data.paymentMethod) {
+      case "bank":
+        return (
+          <div className="grid grid-cols-2 gap-2">
+            <Input label="Account Name" value={data.payment.accountName} onChange={(e) => updatePayment("accountName", e.target.value)} />
+            <Input label="Account Number" value={data.payment.accountNumber} onChange={(e) => updatePayment("accountNumber", e.target.value)} />
+            <Input label="Bank Name" value={data.payment.bankName} onChange={(e) => updatePayment("bankName", e.target.value)} />
+            <Input label="SWIFT" value={data.payment.swift} onChange={(e) => updatePayment("swift", e.target.value)} />
+            <Input label="IBAN" value={data.payment.iban} onChange={(e) => updatePayment("iban", e.target.value)} />
+            <Input label="Routing Number" value={data.payment.routingNumber} onChange={(e) => updatePayment("routingNumber", e.target.value)} />
+          </div>
+        );
+      case "cash":
+        return <p className="text-[13px] text-[var(--mg-ink-4)]">No payment details needed — cash on delivery / pickup.</p>;
+      case "card":
+        return <p className="text-[13px] text-[var(--mg-ink-4)]">Card payment handled separately (e.g. in person or by phone).</p>;
+      default:
+        return (
+          <Input
+            label={data.paymentMethod === "paypal" ? "PayPal Email" : data.paymentMethod === "stripe" ? "Stripe Payment Link" : "Wise Handle / Email"}
+            value={data.payment.payoutId}
+            onChange={(e) => updatePayment("payoutId", e.target.value)}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <style>{`
+        @media print {
+          .invoice-no-print { display: none !important; }
+          .invoice-preview-wrapper { box-shadow: none !important; margin: 0 !important; max-width: 100% !important; }
+          body { background: white !important; }
+        }
+      `}</style>
+
+      {errors.length > 0 && (
+        <div className="invoice-no-print flex items-start gap-2 px-4 py-3 rounded-xl bg-[var(--mg-danger-bg)] text-[var(--mg-danger-t)] text-[13px]">
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          <ul className="space-y-0.5">
+            {errors.map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="grid lg:grid-cols-[1fr_460px] gap-6 items-start">
+        {/* ============ EDITOR (left) ============ */}
+        <div className="invoice-no-print space-y-4">
+          <Section title="Company Information">
+            <FileToDataUrl label="Logo" value={data.company.logoDataUrl} onChange={(v) => updateCompany("logoDataUrl", v)} />
+            <Input label="Company Name" value={data.company.name} onChange={(e) => updateCompany("name", e.target.value)} />
+            <Textarea label="Address" value={data.company.address} onChange={(e) => updateCompany("address", e.target.value)} rows={2} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input label="Phone" value={data.company.phone} onChange={(e) => updateCompany("phone", e.target.value)} />
+              <Input label="Email" type="email" value={data.company.email} onChange={(e) => updateCompany("email", e.target.value)} />
+              <Input label="Website" value={data.company.website} onChange={(e) => updateCompany("website", e.target.value)} />
+              <Input label="Tax ID" value={data.company.taxId} onChange={(e) => updateCompany("taxId", e.target.value)} />
+              <Input label="Registration No." value={data.company.regNumber} onChange={(e) => updateCompany("regNumber", e.target.value)} />
+            </div>
+          </Section>
+
+          <Section title="Client Information">
+            <Input label="Client Name" value={data.client.name} onChange={(e) => updateClient("name", e.target.value)} />
+            <Input label="Client Company" value={data.client.company} onChange={(e) => updateClient("company", e.target.value)} />
+            <Textarea label="Address" value={data.client.address} onChange={(e) => updateClient("address", e.target.value)} rows={2} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input label="Email" type="email" value={data.client.email} onChange={(e) => updateClient("email", e.target.value)} />
+              <Input label="Phone" value={data.client.phone} onChange={(e) => updateClient("phone", e.target.value)} />
+              <Input label="Tax Number" value={data.client.taxNumber} onChange={(e) => updateClient("taxNumber", e.target.value)} />
+            </div>
+          </Section>
+
+          <Section title="Invoice Information">
+            <div className="grid grid-cols-2 gap-2">
+              <Input label="Invoice Number" value={data.invoiceNumber} onChange={(e) => update("invoiceNumber", e.target.value)} />
+              <div>
+                <label className="block text-xs font-semibold text-[var(--mg-ink-2)] mb-1.5">Status</label>
+                <select
+                  value={data.status}
+                  onChange={(e) => update("status", e.target.value as InvoiceStatus)}
+                  className="mg-input"
+                >
+                  {STATUS_OPTIONS.map((s) => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+              <Input label="Issue Date" type="date" value={data.issueDate} onChange={(e) => update("issueDate", e.target.value)} />
+              <Input label="Due Date" type="date" value={data.dueDate} onChange={(e) => update("dueDate", e.target.value)} />
+            </div>
+          </Section>
+
+          <Section title="Products & Services">
+            <div className="space-y-3">
+              {data.items.map((item, idx) => {
+                const calc = computeItem(item);
+                return (
+                  <div key={item.id} className="p-3 rounded-lg border border-[var(--mg-border-2)] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-[var(--mg-ink-4)]">Item {idx + 1}</span>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => moveItem(item.id, -1)} disabled={idx === 0} className="w-6 h-6 rounded flex items-center justify-center text-[var(--mg-ink-4)] hover:bg-[var(--mg-bg-2)] disabled:opacity-30" aria-label="Move up">
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => moveItem(item.id, 1)} disabled={idx === data.items.length - 1} className="w-6 h-6 rounded flex items-center justify-center text-[var(--mg-ink-4)] hover:bg-[var(--mg-bg-2)] disabled:opacity-30" aria-label="Move down">
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => duplicateItem(item.id)} className="w-6 h-6 rounded flex items-center justify-center text-[var(--mg-ink-4)] hover:bg-[var(--mg-bg-2)]" aria-label="Duplicate">
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          disabled={data.items.length <= 1}
+                          className="w-6 h-6 rounded flex items-center justify-center text-[var(--mg-ink-4)] hover:text-[var(--mg-danger)] hover:bg-[var(--mg-danger-bg)] disabled:opacity-30"
+                          aria-label="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <Input placeholder="Product / service name" value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} />
+                    <Textarea placeholder="Description (optional)" value={item.description} onChange={(e) => updateItem(item.id, { description: e.target.value })} rows={2} />
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      <div>
+                        <span className="text-[10px] text-[var(--mg-ink-4)]">Qty</span>
+                        <input type="number" min={0} value={item.qty} onChange={(e) => updateItem(item.id, { qty: Math.max(0, Number(e.target.value) || 0) })} className="mg-input" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-[var(--mg-ink-4)]">Unit Price</span>
+                        <input type="number" min={0} step="0.01" value={item.unitPrice} onChange={(e) => updateItem(item.id, { unitPrice: Math.max(0, Number(e.target.value) || 0) })} className="mg-input" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-[var(--mg-ink-4)]">Discount %</span>
+                        <input type="number" min={0} max={100} value={item.discountPercent} onChange={(e) => updateItem(item.id, { discountPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) })} className="mg-input" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-[var(--mg-ink-4)]">Tax %</span>
+                        <input type="number" min={0} max={100} value={item.taxPercent} onChange={(e) => updateItem(item.id, { taxPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) })} className="mg-input" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-[var(--mg-ink-4)]">SKU</span>
+                        <input type="text" value={item.sku} onChange={(e) => updateItem(item.id, { sku: e.target.value })} className="mg-input" />
+                      </div>
+                    </div>
+                    <p className="text-right text-[12px] font-mono text-[var(--mg-ink-3)]">
+                      Line total: {formatMoney(calc.total, currency)}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            <Button variant="secondary" size="sm" onClick={addItem}>
+              <Plus className="w-3.5 h-3.5" /> Add product
+            </Button>
+          </Section>
+
+          <Section title="Currency & Tax">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-semibold text-[var(--mg-ink-2)] mb-1.5">Currency</label>
+                <select
+                  value={data.currencyCode}
+                  onChange={(e) => {
+                    update("currencyCode", e.target.value);
+                    track("invoice_currency_changed", { currency: e.target.value });
+                  }}
+                  className="mg-input"
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code}>{c.code} — {c.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[var(--mg-ink-2)] mb-1.5">Tax preset (country)</label>
+                <select value={data.taxCountry} onChange={(e) => applyTaxPreset(e.target.value)} className="mg-input">
+                  {TAX_PRESETS.map((p) => (
+                    <option key={p.country} value={p.country}>{p.country}</option>
+                  ))}
+                </select>
+              </div>
+              <Input label="Tax label" value={data.taxLabel} onChange={(e) => update("taxLabel", e.target.value)} hint="Shown in the totals — e.g. VAT, GST, Sales Tax" />
+            </div>
+          </Section>
+
+          <Section title="Discount & Charges">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div>
+                <label className="block text-xs font-semibold text-[var(--mg-ink-2)] mb-1.5">Discount type</label>
+                <select value={data.discountType} onChange={(e) => update("discountType", e.target.value as DiscountType)} className="mg-input">
+                  <option value="percent">Percent (%)</option>
+                  <option value="fixed">Fixed amount</option>
+                </select>
+              </div>
+              <div>
+                <span className="text-[10px] text-[var(--mg-ink-4)]">Invoice discount</span>
+                <input type="number" min={0} value={data.discountValue} onChange={(e) => update("discountValue", Math.max(0, Number(e.target.value) || 0))} className="mg-input" />
+              </div>
+              <div>
+                <span className="text-[10px] text-[var(--mg-ink-4)]">Shipping</span>
+                <input type="number" min={0} value={data.shipping} onChange={(e) => update("shipping", Math.max(0, Number(e.target.value) || 0))} className="mg-input" />
+              </div>
+              <div>
+                <span className="text-[10px] text-[var(--mg-ink-4)]">Handling</span>
+                <input type="number" min={0} value={data.handling} onChange={(e) => update("handling", Math.max(0, Number(e.target.value) || 0))} className="mg-input" />
+              </div>
+              <div>
+                <span className="text-[10px] text-[var(--mg-ink-4)]">Other charges</span>
+                <input type="number" min={0} value={data.otherCharges} onChange={(e) => update("otherCharges", Math.max(0, Number(e.target.value) || 0))} className="mg-input" />
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Notes">
+            <Textarea label="Invoice notes" value={data.notes} onChange={(e) => update("notes", e.target.value)} rows={2} />
+            <Input label="Thank you message" value={data.thankYouMessage} onChange={(e) => update("thankYouMessage", e.target.value)} />
+            <Textarea label="Additional message" value={data.additionalMessage} onChange={(e) => update("additionalMessage", e.target.value)} rows={2} />
+          </Section>
+
+          <Section title="Payment Information">
+            <div>
+              <label className="block text-xs font-semibold text-[var(--mg-ink-2)] mb-1.5">Method</label>
+              <div className="flex flex-wrap gap-2">
+                {PAYMENT_METHODS.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => update("paymentMethod", m.id)}
+                    className={`px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-all duration-[180ms] ${
+                      data.paymentMethod === m.id
+                        ? "border-[var(--mg-brand)] bg-[var(--mg-brand-bg)] text-[var(--mg-brand-t)]"
+                        : "border-[var(--mg-border-2)] text-[var(--mg-ink-3)] hover:bg-[var(--mg-bg-2)]"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {activePaymentFields()}
+          </Section>
+
+          <Section title="Signatures">
+            <div className="grid grid-cols-2 gap-4">
+              <SignaturePad label="Company signature" value={data.companySignature} onChange={(v) => update("companySignature", v)} />
+              <SignaturePad label="Customer signature" value={data.customerSignature} onChange={(v) => update("customerSignature", v)} />
+            </div>
+          </Section>
+
+          <Section title="QR Code">
+            <Input
+              label="QR content (website, payment link, UPI, or any URL/text)"
+              value={data.qrValue}
+              onChange={(e) => update("qrValue", e.target.value)}
+              placeholder="https://…"
+            />
+          </Section>
+
+          <Section title="Template">
+            <div className="flex gap-2 flex-wrap">
+              {(Object.values(TEMPLATES)).map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    update("template", t.id);
+                    track("invoice_template_changed", { template: t.id });
+                  }}
+                  className={`px-3 py-2 rounded-lg text-[13px] font-medium border transition-all duration-[180ms] ${
+                    data.template === t.id
+                      ? "border-[var(--mg-brand)] bg-[var(--mg-brand-bg)] text-[var(--mg-brand-t)]"
+                      : "border-[var(--mg-border-2)] text-[var(--mg-ink-3)] hover:bg-[var(--mg-bg-2)]"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </Section>
+
+          <div className="flex flex-wrap gap-2 sticky bottom-4">
+            <Button variant="primary" onClick={() => exportPdf("portrait")} loading={exporting}>
+              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Download PDF (Portrait)
+            </Button>
+            <Button variant="secondary" onClick={() => exportPdf("landscape")} loading={exporting}>
+              <Download className="w-4 h-4" /> Landscape
+            </Button>
+            <Button variant="secondary" onClick={handlePrint}>
+              <Printer className="w-4 h-4" /> Print
+            </Button>
+            <Button variant="secondary" onClick={handleSave}>
+              <Save className="w-4 h-4" /> Save JSON
+            </Button>
+            <input
+              ref={loadInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => handleLoad(e.target.files?.[0])}
+            />
+            <Button variant="secondary" onClick={() => loadInputRef.current?.click()}>
+              <Upload className="w-4 h-4" /> Load JSON
+            </Button>
+            <Button variant="ghost" onClick={startNew}>
+              <RotateCcw className="w-4 h-4" /> Start new
+            </Button>
+          </div>
+        </div>
+
+        {/* ============ PREVIEW (right) ============ */}
+        <div className="invoice-preview-wrapper lg:sticky lg:top-4">
+          <div
+            ref={previewRef}
+            style={{
+              background: template.bg,
+              color: template.ink,
+              fontFamily: template.font,
+              border: `1px solid ${template.border}`,
+            }}
+            className="rounded-xl shadow-[var(--mg-shadow)] p-8 text-[13px] leading-relaxed"
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 pb-4 mb-4" style={{ borderBottom: `2px solid ${template.accent}` }}>
+              <div className="flex items-start gap-3">
+                {data.company.logoDataUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={data.company.logoDataUrl} alt="Logo" className="w-14 h-14 object-contain" />
+                )}
+                <div>
+                  <p style={{ fontWeight: template.headingWeight as never, fontSize: 18 }}>{data.company.name || "Your Company"}</p>
+                  <p style={{ color: template.inkSoft, whiteSpace: "pre-line" }}>{data.company.address}</p>
+                  <p style={{ color: template.inkSoft }}>
+                    {[data.company.phone, data.company.email, data.company.website].filter(Boolean).join(" · ")}
+                  </p>
+                  {(data.company.taxId || data.company.regNumber) && (
+                    <p style={{ color: template.inkSoft }}>
+                      {data.company.taxId && `Tax ID: ${data.company.taxId}`}
+                      {data.company.taxId && data.company.regNumber && " · "}
+                      {data.company.regNumber && `Reg: ${data.company.regNumber}`}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <p style={{ fontWeight: 800, fontSize: 22, color: template.accent }}>INVOICE</p>
+                <p style={{ color: template.inkSoft }}>{data.invoiceNumber}</p>
+                {(() => {
+                  const s = STATUS_OPTIONS.find((s) => s.id === data.status)!;
+                  return (
+                    <span
+                      className="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                      style={{ background: s.bg, color: s.color }}
+                    >
+                      {s.label}
+                    </span>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Client + dates */}
+            <div className="grid grid-cols-2 gap-4 mb-5">
+              <div>
+                <p style={{ color: template.inkSoft, fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Bill To</p>
+                <p style={{ fontWeight: 700 }}>{data.client.name || "Client name"}</p>
+                {data.client.company && <p>{data.client.company}</p>}
+                <p style={{ color: template.inkSoft, whiteSpace: "pre-line" }}>{data.client.address}</p>
+                <p style={{ color: template.inkSoft }}>{[data.client.email, data.client.phone].filter(Boolean).join(" · ")}</p>
+              </div>
+              <div className="text-right">
+                <p><span style={{ color: template.inkSoft }}>Issue date: </span>{data.issueDate}</p>
+                <p><span style={{ color: template.inkSoft }}>Due date: </span>{data.dueDate}</p>
+              </div>
+            </div>
+
+            {/* Line items table */}
+            <table className="w-full mb-5" style={{ borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: template.accentSoft }}>
+                  <th className="text-left p-2" style={{ fontSize: 11 }}>Item</th>
+                  <th className="text-right p-2" style={{ fontSize: 11 }}>Qty</th>
+                  <th className="text-right p-2" style={{ fontSize: 11 }}>Price</th>
+                  <th className="text-right p-2" style={{ fontSize: 11 }}>Disc.</th>
+                  <th className="text-right p-2" style={{ fontSize: 11 }}>Tax</th>
+                  <th className="text-right p-2" style={{ fontSize: 11 }}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {totals.lines.map(({ item, calc }) => (
+                  <tr key={item.id} style={{ borderBottom: `1px solid ${template.border}` }}>
+                    <td className="p-2">
+                      <p style={{ fontWeight: 600 }}>{item.name || "—"}</p>
+                      {item.description && <p style={{ color: template.inkSoft, fontSize: 11 }}>{item.description}</p>}
+                      {item.sku && <p style={{ color: template.inkSoft, fontSize: 10 }}>SKU: {item.sku}</p>}
+                    </td>
+                    <td className="text-right p-2">{item.qty}</td>
+                    <td className="text-right p-2">{formatMoney(item.unitPrice, currency)}</td>
+                    <td className="text-right p-2">{item.discountPercent}%</td>
+                    <td className="text-right p-2">{item.taxPercent}%</td>
+                    <td className="text-right p-2" style={{ fontWeight: 600 }}>{formatMoney(calc.total, currency)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Summary */}
+            <div className="flex justify-end mb-6">
+              <div className="w-64 space-y-1">
+                <div className="flex justify-between"><span style={{ color: template.inkSoft }}>Subtotal</span><span>{formatMoney(totals.subtotal, currency)}</span></div>
+                {totals.itemDiscountTotal > 0 && (
+                  <div className="flex justify-between"><span style={{ color: template.inkSoft }}>Item discounts</span><span>-{formatMoney(totals.itemDiscountTotal, currency)}</span></div>
+                )}
+                {totals.invoiceDiscountAmt > 0 && (
+                  <div className="flex justify-between"><span style={{ color: template.inkSoft }}>Discount</span><span>-{formatMoney(totals.invoiceDiscountAmt, currency)}</span></div>
+                )}
+                {totals.taxTotal > 0 && (
+                  <div className="flex justify-between"><span style={{ color: template.inkSoft }}>{data.taxLabel}</span><span>{formatMoney(totals.taxTotal, currency)}</span></div>
+                )}
+                {data.shipping > 0 && (
+                  <div className="flex justify-between"><span style={{ color: template.inkSoft }}>Shipping</span><span>{formatMoney(data.shipping, currency)}</span></div>
+                )}
+                {data.handling > 0 && (
+                  <div className="flex justify-between"><span style={{ color: template.inkSoft }}>Handling</span><span>{formatMoney(data.handling, currency)}</span></div>
+                )}
+                {data.otherCharges > 0 && (
+                  <div className="flex justify-between"><span style={{ color: template.inkSoft }}>Other</span><span>{formatMoney(data.otherCharges, currency)}</span></div>
+                )}
+                <div className="flex justify-between pt-2 mt-1" style={{ borderTop: `2px solid ${template.accent}`, fontWeight: 800, fontSize: 15 }}>
+                  <span>Total</span><span style={{ color: template.accent }}>{formatMoney(totals.grandTotal, currency)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment info + QR */}
+            <div className="flex items-start justify-between gap-4 mb-6" style={{ borderTop: `1px solid ${template.border}`, paddingTop: 16 }}>
+              <div>
+                <p style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", color: template.inkSoft }}>
+                  Payment — {PAYMENT_METHODS.find((m) => m.id === data.paymentMethod)?.label}
+                </p>
+                {data.paymentMethod === "bank" ? (
+                  <div style={{ color: template.inkSoft, fontSize: 12 }}>
+                    {data.payment.accountName && <p>Account name: {data.payment.accountName}</p>}
+                    {data.payment.accountNumber && <p>Account number: {data.payment.accountNumber}</p>}
+                    {data.payment.bankName && <p>Bank: {data.payment.bankName}</p>}
+                    {data.payment.swift && <p>SWIFT: {data.payment.swift}</p>}
+                    {data.payment.iban && <p>IBAN: {data.payment.iban}</p>}
+                    {data.payment.routingNumber && <p>Routing #: {data.payment.routingNumber}</p>}
+                  </div>
+                ) : (
+                  data.payment.payoutId && <p style={{ color: template.inkSoft, fontSize: 12 }}>{data.payment.payoutId}</p>
+                )}
+              </div>
+              {qrDataUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={qrDataUrl} alt="QR code" className="w-20 h-20 shrink-0" />
+              )}
+            </div>
+
+            {/* Notes */}
+            {(data.notes || data.additionalMessage) && (
+              <div className="mb-4" style={{ fontSize: 12, color: template.inkSoft }}>
+                {data.notes && <p className="mb-1">{data.notes}</p>}
+                {data.additionalMessage && <p>{data.additionalMessage}</p>}
+              </div>
+            )}
+
+            {/* Signatures */}
+            {(data.companySignature || data.customerSignature) && (
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                {data.companySignature && (
+                  <div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={data.companySignature} alt="Company signature" className="h-14" />
+                    <p style={{ borderTop: `1px solid ${template.border}`, color: template.inkSoft, fontSize: 11, paddingTop: 4 }}>Authorized signature</p>
+                  </div>
+                )}
+                {data.customerSignature && (
+                  <div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={data.customerSignature} alt="Customer signature" className="h-14" />
+                    <p style={{ borderTop: `1px solid ${template.border}`, color: template.inkSoft, fontSize: 11, paddingTop: 4 }}>Customer signature</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="text-center pt-4" style={{ borderTop: `1px solid ${template.border}`, color: template.accent, fontWeight: 600 }}>
+              {data.thankYouMessage}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <div className="mt-4 flex items-center justify-between border-t border-[var(--mg-border)] pt-4">
-
-      <span className="text-lg font-semibold">
-
-        Subtotal
-
-      </span>
-
-      <span className="text-2xl font-bold text-[var(--mg-brand)]">
-
-        ${subtotal.toFixed(2)}
-
-      </span>
-
-    </div>
-
-    <p className="mt-3 text-xs text-[var(--mg-ink-4)]">
-
-      Discount and tax are already included in the subtotal.
-
-    </p>
-
-  </div>
-
-</div>
-
-</div>
-
-{/* Product Name */}
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Product / Service
-
-</label>
-
-<input
-value={item.name}
-onChange={(e)=>
-updateItem(
-item.id,
-"name",
-e.target.value
-)
-}
-placeholder="Product Name"
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-/>
-
-</div>
-<div className="grid gap-6 lg:grid-cols-2">
-
-{/* Invoice Settings */}
-
-<div className="rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-bg-1)] p-6">
-
-<h2 className="mb-5 text-lg font-semibold">
-
-Invoice Settings
-
-</h2>
-
-<div className="space-y-4">
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Currency
-
-</label>
-
-<select
-value={currency}
-onChange={(e)=>
-setCurrency(e.target.value)
-}
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
->
-
-{currencies.map((c)=>(
-
-<option
-key={c}
-value={c}
->
-
-{c}
-
-</option>
-
-))}
-
-</select>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Shipping
-
-</label>
-
-<input
-type="number"
-min={0}
-value={shipping}
-onChange={(e)=>
-setShipping(
-Number(e.target.value)
-)
-}
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-/>
-
-</div>
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Extra Discount
-
-</label>
-
-<input
-type="number"
-min={0}
-value={extraDiscount}
-onChange={(e)=>
-setExtraDiscount(
-Number(e.target.value)
-)
-}
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-/>
-
-</div>
-
-</div>
-
-</div>
-<div className="rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-brand-bg)] p-6">
-
-<h2 className="mb-5 text-lg font-semibold">
-
-Summary
-
-</h2>
-
-<div className="space-y-3">
-
-<div className="flex justify-between">
-
-<span>
-
-Subtotal
-
-</span>
-
-<span>
-
-{currency} {subtotal.toFixed(2)}
-
-</span>
-
-</div>
-
-<div className="flex justify-between">
-
-<span>
-
-Shipping
-
-</span>
-
-<span>
-
-{currency} {shipping.toFixed(2)}
-
-</span>
-
-</div>
-
-<div className="flex justify-between">
-
-<span>
-
-Discount
-
-</span>
-
-<span>
-
-- {currency} {extraDiscount.toFixed(2)}
-
-</span>
-
-</div>
-
-<hr />
-
-<div className="flex justify-between text-2xl font-bold">
-
-<span>
-
-Grand Total
-
-</span>
-
-<span>
-
-{currency} {grandTotal.toFixed(2)}
-
-</span>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-{/* Quantity */}
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Quantity
-
-</label>
-
-<input
-type="number"
-min={1}
-value={item.qty}
-onChange={(e)=>
-updateItem(
-item.id,
-"qty",
-Number(e.target.value)
-)
-}
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-/>
-
-</div>
-
-{/* Description */}
-
-<div className="lg:col-span-2">
-
-<label className="mb-2 block text-sm font-medium">
-
-Description
-
-</label>
-
-<textarea
-rows={3}
-value={item.description}
-onChange={(e)=>
-updateItem(
-item.id,
-"description",
-e.target.value
-)
-}
-placeholder="Product description..."
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-/>
-
-</div>
-
-{/* Unit Price */}
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Unit Price
-
-</label>
-
-<input
-type="number"
-min={0}
-value={item.price}
-onChange={(e)=>
-updateItem(
-item.id,
-"price",
-Number(e.target.value)
-)
-}
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-/>
-
-</div>
-
-{/* Discount */}
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Discount %
-
-</label>
-
-<input
-type="number"
-min={0}
-max={100}
-value={item.discount}
-onChange={(e)=>
-updateItem(
-item.id,
-"discount",
-Number(e.target.value)
-)
-}
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-/>
-
-</div>
-
-{/* Tax */}
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Tax %
-
-</label>
-
-<input
-type="number"
-min={0}
-max={100}
-value={item.tax}
-onChange={(e)=>
-updateItem(
-item.id,
-"tax",
-Number(e.target.value)
-)
-}
-className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-/>
-
-</div>
-
-{/* Line Total */}
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Line Total
-
-</label>
-
-<div className="rounded-xl bg-[var(--mg-brand-bg)] p-3 font-semibold text-[var(--mg-brand-t)]">
-
-$
-{(
-item.qty * item.price *
-(1 - item.discount / 100) *
-(1 + item.tax / 100)
-).toFixed(2)}
-
-</div>
-
-</div>
-
-</div>
-
-<div className="mt-5 flex justify-end">
-
-<Button
-variant="ghost"
-onClick={()=>
-removeItem(item.id)
-}
->
-
-<Trash2 className="h-4 w-4"/>
-
-Remove
-
-</Button>
-
-</div>
-
-</div>
-
-))}
-
-</div>
-
-</div>
-
-{/* Info */}
-
-<div className="rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-bg-1)] p-5">
-
-  <h3 className="font-semibold">
-
-    🚀 Coming in the next parts
-
-  </h3>
-
-  <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--mg-ink-4)]">
-
-    <li>Unlimited Products</li>
-
-    <li>Automatic GST / VAT Calculation</li>
-
-    <li>Shipping Charges</li>
-
-    <li>Discount System</li>
-
-    <li>Invoice Preview</li>
-
-    <li>Professional PDF Download</li>
-
-    <li>Print Invoice</li>
-
-  </ul>
-
-</div>
-
-</div>
-<div className="grid gap-6 lg:grid-cols-2">
-
-  {/* Notes */}
-
-  <div className="rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-bg-1)] p-6">
-
-    <h2 className="mb-5 text-lg font-semibold">
-
-      Notes
-
-    </h2>
-
-    <textarea
-      rows={8}
-      value={notes}
-      onChange={(e) => setNotes(e.target.value)}
-      placeholder="Thank you for your business..."
-      className="w-full rounded-xl border border-[var(--mg-border)] p-4"
-    />
-
-  </div>
-
-  {/* Payment Terms */}
-
-  <div className="rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-bg-1)] p-6">
-
-    <h2 className="mb-5 text-lg font-semibold">
-
-      Payment Terms
-
-    </h2>
-
-    <textarea
-      rows={8}
-      value={terms}
-      onChange={(e) => setTerms(e.target.value)}
-      placeholder="Payment terms..."
-      className="w-full rounded-xl border border-[var(--mg-border)] p-4"
-    />
-
-  </div>
-
-</div>
-
-{/* Payment Information */}
-
-<div className="rounded-2xl border border-[var(--mg-border)] bg-[var(--mg-bg-1)] p-6">
-
-  <h2 className="mb-5 text-lg font-semibold">
-
-    Payment Information
-
-  </h2>
-
-  <div className="grid gap-5 md:grid-cols-2">
-
-    <div>
-
-      <label className="mb-2 block text-sm font-medium">
-
-        Payment Method
-
-      </label>
-
-      <select className="w-full rounded-xl border border-[var(--mg-border)] p-3">
-
-        <option>Bank Transfer</option>
-
-        <option>Cash</option>
-
-        <option>PayPal</option>
-
-        <option>Stripe</option>
-
-        <option>Wise</option>
-
-        <option>Credit Card</option>
-
-      </select>
-
-    </div>
-
-    <div>
-
-      <label className="mb-2 block text-sm font-medium">
-
-        Account Name
-
-      </label>
-
-      <input
-        placeholder="Company Account Name"
-        className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-      />
-
-    </div>
-
-    <div>
-
-      <label className="mb-2 block text-sm font-medium">
-
-        Account Number
-
-      </label>
-
-      <input
-        placeholder="123456789"
-        className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-      />
-
-    </div>
-
-    <div>
-
-      <label className="mb-2 block text-sm font-medium">
-
-        SWIFT / IBAN
-
-      </label>
-
-      <input
-        placeholder="SWIFT / IBAN"
-        className="w-full rounded-xl border border-[var(--mg-border)] p-3"
-      />
-
-    </div>
-
-  </div>
-
-</div>
-);
+  );
 }
