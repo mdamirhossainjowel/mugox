@@ -206,6 +206,129 @@
   };
 
   const STORAGE_KEY_COUNTER = "mugox_invoice_counter";
+  /* ===========================================================
+   PROFESSIONAL PAGINATION ENGINE
+=========================================================== */
+
+const PAGE_HEIGHT = 1045;
+
+/*
+Header + Company + Client + Invoice Info
+*/
+const HEADER_HEIGHT = 330;
+
+/*
+Summary
+*/
+const SUMMARY_HEIGHT = 270;
+
+/*
+Notes
+*/
+const NOTES_HEIGHT = 80;
+
+/*
+Signature
+*/
+const SIGNATURE_HEIGHT = 120;
+
+/*
+Footer
+*/
+const FOOTER_HEIGHT = 45;
+
+const LAST_SECTION_HEIGHT =
+  SUMMARY_HEIGHT +
+  NOTES_HEIGHT +
+  SIGNATURE_HEIGHT +
+  FOOTER_HEIGHT;
+
+function estimateItemHeight(item: ProductLine) {
+    let height = 46;
+
+    if (item.description) {
+        const charsPerLine = 55;
+        const lines = Math.ceil(item.description.length / charsPerLine);
+        height += lines * 18;
+    }
+
+    if (item.sku) {
+        height += 16;
+    }
+
+    return Math.max(height, 46);
+}
+
+interface InvoicePage {
+  items: {
+    item: ProductLine;
+    calc: ReturnType<typeof computeItem>;
+  }[];
+
+  isLast: boolean;
+}
+
+function paginateInvoice(
+  lines: {
+    item: ProductLine;
+    calc: ReturnType<typeof computeItem>;
+  }[]
+): InvoicePage[] {
+
+  const pages: InvoicePage[] = [];
+
+  let current: typeof lines = [];
+
+  let usedHeight = HEADER_HEIGHT;
+  const TABLE_HEADER_HEIGHT = 42;
+usedHeight += TABLE_HEADER_HEIGHT;
+
+  lines.forEach((line, index) => {
+
+    const itemHeight = estimateItemHeight(line.item);
+
+    const isLastItem = index === lines.length - 1;
+
+    /*
+      যদি এই Item যোগ করলে Summary এর জায়গা না থাকে
+      তাহলে Next Page
+    */
+
+   const reserveHeight =
+    isLastItem
+        ? LAST_SECTION_HEIGHT + 25
+        : 0;
+
+    if (
+      usedHeight +
+        itemHeight +
+        reserveHeight >
+      PAGE_HEIGHT
+    ) {
+
+      pages.push({
+        items: current,
+        isLast: false,
+      });
+
+      current = [];
+
+      usedHeight = HEADER_HEIGHT;
+    }
+
+    current.push(line);
+
+    usedHeight += itemHeight;
+
+  });
+
+  pages.push({
+    items: current,
+    isLast: true,
+  });
+
+  return pages;
+}
 
 
 
@@ -276,14 +399,7 @@
       sku: "",
     };
   }
-  const ITEMS_PER_PAGE = 4; // প্রতি পেইজে কতগুলো item row ধরবে, প্রয়োজনে বাড়ান/কমান
 
-  function chunkItems<T>(arr: T[], size: number): T[][] {
-    if (arr.length === 0) return [[]];
-    const chunks: T[][] = [];
-    for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
-    return chunks;
-  }
   function defaultInvoice(): InvoiceData {
     const today = new Date();
     const due = new Date(today);
@@ -506,7 +622,9 @@
     const currency = useMemo(() => getCurrency(data.currencyCode), [data.currencyCode]);
     const totals = useMemo(() => computeInvoiceTotals(data), [data]);
     const template = TEMPLATES[data.template];
-    const itemPages = useMemo(() => chunkItems(totals.lines, ITEMS_PER_PAGE), [totals.lines]);
+    const pages = useMemo(() => {
+  return paginateInvoice(totals.lines);
+}, [totals.lines]);
 
     const validate = useCallback((): string[] => {
       const errs: string[] = [];
@@ -598,10 +716,25 @@
         pdf.setFillColor(template.bg);
         pdf.rect(0, 0, pageW, pageH, "F");
 
-        const scale = (pageW - margin * 2) / canvas.width; // আগের মতোই fixed width-scale
-        const imgW = canvas.width * scale;
-        const imgH = canvas.height * scale;
-        pdf.addImage(imgData, "PNG", margin, margin, imgW, imgH);
+        const scaleX = (pageW - margin * 2) / canvas.width;
+const scaleY = (pageH - margin * 2) / canvas.height;
+
+const scale = Math.min(scaleX, scaleY);
+
+const imgWidth = canvas.width * scale;
+const imgHeight = canvas.height * scale;
+
+const x = (pageW - imgWidth) / 2;
+const y = (pageH - imgHeight) / 2;
+
+pdf.addImage(
+    imgData,
+    "PNG",
+    x,
+    y,
+    imgWidth,
+    imgHeight
+);
       }
 
       pdf.save(`${data.invoiceNumber || "invoice"}.pdf`);
@@ -899,13 +1032,32 @@
 
           {/* ============ PREVIEW (right) ============ */}
           <div className="invoice-preview-wrapper lg:sticky lg:top-4">
-            {itemPages.map((pageLines, pageIndex) => {
-    const isLastPage = pageIndex === itemPages.length - 1;
+           {pages.map((page, pageIndex) => {
+
+    const pageLines = page.items;
+
+    const isLastPage = page.isLast;
     return (
       <div
         key={pageIndex}
         ref={(el) => { pageRefs.current[pageIndex] = el; }}
-        style={{ background: template.bg, color: template.ink, fontFamily: template.font, border: `1px solid ${template.border}` }}
+     style={{
+    width: "794px",
+    height: "1123px",
+
+    background: template.bg,
+    color: template.ink,
+    fontFamily: template.font,
+
+    border: `1px solid ${template.border}`,
+
+    display: "flex",
+    flexDirection: "column",
+
+    overflow: "hidden",
+
+    position: "relative",
+}}
         className="rounded-xl shadow-[var(--mg-shadow)] p-8 text-[13px] leading-relaxed mb-4"
       >
               {/* Header */}
@@ -961,7 +1113,13 @@
                   <p><span style={{ color: template.inkSoft }}>Due date: </span>{data.dueDate}</p>
                 </div>
               </div>
-
+<div
+    style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+    }}
+>
               {/* Line items table */}
              <table className="w-full mb-5" style={{ borderCollapse: "collapse", tableLayout: "fixed" }}>
   <thead>
@@ -977,7 +1135,13 @@
                 <tbody>
                   {pageLines.map(({ item, calc }) => (
                     
-                    <tr key={item.id} style={{ borderBottom: `1px solid ${template.border}` }}>
+                    <tr
+    key={item.id}
+    style={{
+        breakInside: "avoid",
+        pageBreakInside: "avoid"
+    }}
+>
                       <td className="p-2">
                         <p style={{ fontWeight: 600 }}>{item.name || "—"}</p>
                         {item.description && <p style={{ color: template.inkSoft, fontSize: 11 }}>{item.description}</p>}
@@ -992,12 +1156,26 @@
                   ))}
                 </tbody>
               </table>
+              </div>
           {/* Summary, notes, signatures, footer — শুধু isLastPage হলে দেখান */}
-              {isLastPage && (
+              {page.isLast && (
                 <>
                 {/* Summary */}
-                <div className="flex justify-end mb-6">
-                <div className="w-64 space-y-1">
+               <div
+className="flex justify-end mt-auto mb-6"
+style={{
+    breakInside: "avoid",
+    pageBreakInside: "avoid",
+    flexShrink: 0
+}}
+>
+                <div
+    className="w-72 space-y-2 rounded-xl p-5"
+    style={{
+        background: "#F8FAFC",
+        border: "1px solid #E5E7EB"
+    }}
+>
                   <div className="flex justify-between"><span style={{ color: template.inkSoft }}>Subtotal</span><span>{formatMoney(totals.subtotal, currency)}</span></div>
                   {totals.itemDiscountTotal > 0 && (
                     <div className="flex justify-between"><span style={{ color: template.inkSoft }}>Item discounts</span><span>-{formatMoney(totals.itemDiscountTotal, currency)}</span></div>
@@ -1032,7 +1210,14 @@
 
             {/* Signatures */}
               {(data.companySignature || data.customerSignature) && (
-                <div className="grid grid-cols-2 gap-4 mb-4">
+               <div
+className="grid grid-cols-2 gap-4 mb-4"
+style={{
+    breakInside: "avoid",
+    pageBreakInside: "avoid",
+    flexShrink: 0
+}}
+>
                   {data.companySignature && (
                     <div>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1051,7 +1236,16 @@
               )}
 
               {/* Footer */}
-            <div className="text-center pt-4" style={{ borderTop: `1px solid ${template.border}`, color: template.accent, fontWeight: 600 }}>
+          <div
+className="text-center pt-4"
+style={{
+    marginTop:"auto",
+    borderTop:`1px solid ${template.border}`,
+    color:template.accent,
+    fontWeight:600,
+    flexShrink:0,
+}}
+>
                 {data.thankYouMessage}
               </div>
                 </>
