@@ -10,6 +10,8 @@ import { useState } from "react";
 const navLinks = [
   { href: "/tools", label: "All tools" },
   { href: "/pdf", label: "PDF" },
+  { href: "/word", label: "Word" },
+  { href: "/business", label: "Business" },
   { href: "/image", label: "Image" },
   { href: "/text", label: "Text" },
   { href: "/developer", label: "Dev" },
