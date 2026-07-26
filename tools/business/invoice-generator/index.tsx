@@ -70,16 +70,6 @@
     taxNumber: string;
   }
 
-  interface PaymentFields {
-    accountName: string;
-    accountNumber: string;
-    bankName: string;
-    swift: string;
-    iban: string;
-    routingNumber: string;
-    payoutId: string; // used for paypal/stripe/wise handle or email
-  }
-
   interface InvoiceData {
     company: CompanyInfo;
     client: ClientInfo;
@@ -99,8 +89,6 @@
     notes: string;
     thankYouMessage: string;
     additionalMessage: string;
-    paymentMethod: PaymentMethod;
-    payment: PaymentFields;
     companySignature: string;
     customerSignature: string;
     qrValue: string;
@@ -147,21 +135,10 @@
     { country: "Custom", label: "Tax", rate: 0 },
   ];
 
-  const PAYMENT_METHODS: { id: PaymentMethod; label: string }[] = [
-    { id: "bank", label: "Bank Transfer" },
-    { id: "paypal", label: "PayPal" },
-    { id: "stripe", label: "Stripe" },
-    { id: "wise", label: "Wise" },
-    { id: "cash", label: "Cash" },
-    { id: "card", label: "Credit Card" },
-  ];
-
   const STATUS_OPTIONS: { id: InvoiceStatus; label: string; color: string; bg: string }[] = [
     { id: "draft", label: "Draft", color: "#6b7280", bg: "#f3f4f6" },
-    { id: "pending", label: "Pending", color: "#b45309", bg: "#fef3c7" },
-    { id: "paid", label: "Paid", color: "#15803d", bg: "#dcfce7" },
     { id: "unpaid", label: "Unpaid", color: "#b91c1c", bg: "#fee2e2" },
-    { id: "cancelled", label: "Cancelled", color: "#71717a", bg: "#f4f4f5" },
+  
   ];
 
   interface TemplateStyle {
@@ -332,8 +309,6 @@
       notes: "",
       thankYouMessage: "Thank you for your business!",
       additionalMessage: "",
-      paymentMethod: "bank",
-      payment: { accountName: "", accountNumber: "", bankName: "", swift: "", iban: "", routingNumber: "", payoutId: "" },
       companySignature: "",
       customerSignature: "",
       qrValue: "",
@@ -556,9 +531,6 @@
 
     const updateClient = <K extends keyof ClientInfo>(key: K, value: ClientInfo[K]) =>
       setData((d) => ({ ...d, client: { ...d.client, [key]: value } }));
-
-    const updatePayment = <K extends keyof PaymentFields>(key: K, value: PaymentFields[K]) =>
-      setData((d) => ({ ...d, payment: { ...d.payment, [key]: value } }));
 
     /* ---------- line items ---------- */
 
@@ -991,17 +963,17 @@
               </div>
 
               {/* Line items table */}
-              <table className="w-full mb-5" style={{ borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ background: template.accentSoft }}>
-                    <th className="text-left p-2" style={{ fontSize: 11 }}>Item</th>
-                    <th className="text-right p-2" style={{ fontSize: 11 }}>Qty</th>
-                    <th className="text-right p-2" style={{ fontSize: 11 }}>Price</th>
-                    <th className="text-right p-2" style={{ fontSize: 11 }}>Disc.</th>
-                    <th className="text-right p-2" style={{ fontSize: 11 }}>Tax</th>
-                    <th className="text-right p-2" style={{ fontSize: 11 }}>Total</th>
-                  </tr>
-                </thead>
+             <table className="w-full mb-5" style={{ borderCollapse: "collapse", tableLayout: "fixed" }}>
+  <thead>
+    <tr style={{ background: template.accentSoft }}>
+      <th className="text-left p-2" style={{ fontSize: 11, width: "38%" }}>Item</th>
+      <th className="text-right p-2" style={{ fontSize: 11, width: "8%" }}>Qty</th>
+      <th className="text-right p-2" style={{ fontSize: 11, width: "16%" }}>Price</th>
+      <th className="text-right p-2" style={{ fontSize: 11, width: "10%" }}>Disc.</th>
+      <th className="text-right p-2" style={{ fontSize: 11, width: "10%" }}>Tax</th>
+      <th className="text-right p-2" style={{ fontSize: 11, width: "18%" }}>Total</th>
+    </tr>
+  </thead>
                 <tbody>
                   {pageLines.map(({ item, calc }) => (
                     
