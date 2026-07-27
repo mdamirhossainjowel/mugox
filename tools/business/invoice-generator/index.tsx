@@ -37,7 +37,7 @@
 
   type InvoiceStatus = "draft" | "paid" | "unpaid";
   type DiscountType = "percent" | "fixed";
-  type TemplateId = "modern" | "minimal" | "corporate" | "dark";
+  type TemplateId = "modern" | "minimal" | "corporate"
 
   interface ProductLine {
     id: string;
@@ -135,12 +135,6 @@
     { country: "Custom", label: "Tax", rate: 0 },
   ];
 
-  const STATUS_OPTIONS: { id: InvoiceStatus; label: string; color: string; bg: string }[] = [
-    { id: "draft", label: "Draft", color: "#6b7280", bg: "#f3f4f6" },
-    { id: "unpaid", label: "Unpaid", color: "#b91c1c", bg: "#fee2e2" },
-  
-  ];
-
   interface TemplateStyle {
     id: TemplateId;
     label: string;
@@ -190,18 +184,6 @@
       border: "#cbd5e1",
       font: "Georgia, 'Times New Roman', serif",
       headingWeight: "700",
-    },
-    dark: {
-      id: "dark",
-      label: "Dark",
-      bg: "#111827",
-      ink: "#f9fafb",
-      inkSoft: "#9ca3af",
-      accent: "#818cf8",
-      accentSoft: "#312e81",
-      border: "#374151",
-      font: "system-ui, -apple-system, sans-serif",
-      headingWeight: "800",
     },
   };
 
@@ -906,18 +888,6 @@ pdf.addImage(
             <Section title="Invoice Information">
               <div className="grid grid-cols-2 gap-2">
                 <Input label="Invoice Number" value={data.invoiceNumber} onChange={(e) => update("invoiceNumber", e.target.value)} />
-                <div>
-                  <label className="block text-xs font-semibold text-[var(--mg-ink-2)] mb-1.5">Status</label>
-                  <select
-                    value={data.status}
-                    onChange={(e) => update("status", e.target.value as InvoiceStatus)}
-                    className="mg-input"
-                  >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s.id} value={s.id}>{s.label}</option>
-                    ))}
-                  </select>
-                </div>
                 <Input label="Issue Date" type="date" value={data.issueDate} onChange={(e) => update("issueDate", e.target.value)} />
                 <Input label="Due Date" type="date" value={data.dueDate} onChange={(e) => update("dueDate", e.target.value)} />
               </div>
@@ -1046,16 +1016,7 @@ pdf.addImage(
             </Section>
 
             <Section title="Notes">
-              <Textarea label="Invoice notes" value={data.notes} onChange={(e) => update("notes", e.target.value)} rows={2} />
               <Input label="Thank you message" value={data.thankYouMessage} onChange={(e) => update("thankYouMessage", e.target.value)} />
-              <Textarea label="Additional message" value={data.additionalMessage} onChange={(e) => update("additionalMessage", e.target.value)} rows={2} />
-            </Section>
-
-            <Section title="Signatures">
-              <div className="grid grid-cols-2 gap-4">
-                <SignaturePad label="Company signature" value={data.companySignature} onChange={(v) => update("companySignature", v)} />
-                <SignaturePad label="Customer signature" value={data.customerSignature} onChange={(v) => update("customerSignature", v)} />
-              </div>
             </Section>
 
             <Section title="Template">
@@ -1082,7 +1043,7 @@ pdf.addImage(
             <div className="flex flex-wrap gap-2 sticky bottom-4">
               <Button variant="primary" onClick={() => exportPdf()} loading={exporting}>
                 {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                Download PDF (Portrait)
+                Download PDF
               </Button>
       
               <Button variant="ghost" onClick={startNew}>
@@ -1146,17 +1107,6 @@ pdf.addImage(
                 <div className="text-right shrink-0">
                   <p style={{ fontWeight: 800, fontSize: 22, color: template.accent }}>INVOICE</p>
                   <p style={{ color: template.inkSoft }}>{data.invoiceNumber}</p>
-                  {(() => {
-                    const s = STATUS_OPTIONS.find((s) => s.id === data.status)!;
-                    return (
-                      <span
-                        className="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
-                        style={{ background: s.bg, color: s.color }}
-                      >
-                        {s.label}
-                      </span>
-                    );
-                  })()}
                 </div>
               </div>
 
@@ -1174,14 +1124,7 @@ pdf.addImage(
                   <p><span style={{ color: template.inkSoft }}>Due date: </span>{data.dueDate}</p>
                 </div>
               </div>
-<div
-    style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        minHeight: 0,
-    }}
->
+<div>
               {/* Line items table */}
              <table className="w-full mb-5" style={{ borderCollapse: "collapse", tableLayout: "fixed" }}>
   <thead>
@@ -1269,33 +1212,6 @@ style={{
                   {data.additionalMessage && <p>{data.additionalMessage}</p>}
                 </div>
                 )}
-
-            {/* Signatures */}
-              {(data.companySignature || data.customerSignature) && (
-               <div
-className="grid grid-cols-2 gap-4 mb-4"
-style={{
-    breakInside: "avoid",
-    pageBreakInside: "avoid",
-    flexShrink: 0
-}}
->
-                  {data.companySignature && (
-                    <div>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={data.companySignature} alt="Company signature" className="h-14" />
-                      <p style={{ borderTop: `1px solid ${template.border}`, color: template.inkSoft, fontSize: 11, paddingTop: 4 }}>Authorized signature</p>
-                    </div>
-                  )}
-                  {data.customerSignature && (
-                    <div>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={data.customerSignature} alt="Customer signature" className="h-14" />
-                      <p style={{ borderTop: `1px solid ${template.border}`, color: template.inkSoft, fontSize: 11, paddingTop: 4 }}>Customer signature</p>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Footer */}
           <div
