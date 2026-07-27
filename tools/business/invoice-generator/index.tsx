@@ -210,53 +210,80 @@
    PROFESSIONAL PAGINATION ENGINE
 =========================================================== */
 
-const PAGE_HEIGHT = 1045;
+const PAGE_HEIGHT = 1123;
 
 /*
-Header + Company + Client + Invoice Info
+Header + Company + Client
 */
-const HEADER_HEIGHT = 330;
+const HEADER_HEIGHT = 250;
 
 /*
-Summary
+Table Header
 */
-const SUMMARY_HEIGHT = 270;
+const TABLE_HEADER_HEIGHT = 42;
+
+/*
+Summary Card
+*/
+const SUMMARY_HEIGHT = 210;
 
 /*
 Notes
 */
-const NOTES_HEIGHT = 80;
+const NOTES_HEIGHT = 60;
 
 /*
 Signature
 */
-const SIGNATURE_HEIGHT = 120;
+const SIGNATURE_HEIGHT = 95;
 
 /*
 Footer
 */
-const FOOTER_HEIGHT = 45;
+const FOOTER_HEIGHT = 40;
 
-const LAST_SECTION_HEIGHT =
-  SUMMARY_HEIGHT +
-  NOTES_HEIGHT +
-  SIGNATURE_HEIGHT +
-  FOOTER_HEIGHT;
+function getLastSectionHeight(data: InvoiceData) {
+
+    let height = SUMMARY_HEIGHT + FOOTER_HEIGHT;
+
+    if (data.notes || data.additionalMessage) {
+        height += NOTES_HEIGHT;
+    }
+
+    if (
+        data.companySignature ||
+        data.customerSignature
+    ) {
+        height += SIGNATURE_HEIGHT;
+    }
+
+    return height + 20;
+}
 
 function estimateItemHeight(item: ProductLine) {
-    let height = 46;
+
+    let height = 42;
+
+    if (item.name) {
+        height += 18;
+    }
 
     if (item.description) {
-        const charsPerLine = 55;
-        const lines = Math.ceil(item.description.length / charsPerLine);
-        height += lines * 18;
+
+        const charsPerLine = 65;
+        const lines = Math.max(
+            1,
+            Math.ceil(item.description.length / charsPerLine)
+        );
+
+        height += lines * 16;
     }
 
     if (item.sku) {
-        height += 16;
+        height += 14;
     }
 
-    return Math.max(height, 46);
+    return height;
 }
 
 interface InvoicePage {
@@ -269,65 +296,92 @@ interface InvoicePage {
 }
 
 function paginateInvoice(
-  lines: {
-    item: ProductLine;
-    calc: ReturnType<typeof computeItem>;
-  }[]
+    lines,data: InvoiceData
 ): InvoicePage[] {
 
-  const pages: InvoicePage[] = [];
+    const pages: InvoicePage[] = [];
 
-  let current: typeof lines = [];
+    let current: typeof lines = [];
 
-  let usedHeight = HEADER_HEIGHT;
-  const TABLE_HEADER_HEIGHT = 42;
-usedHeight += TABLE_HEADER_HEIGHT;
+    let usedHeight =
+        HEADER_HEIGHT +
+        TABLE_HEADER_HEIGHT;
 
-  lines.forEach((line, index) => {
+    for (let i = 0; i < lines.length; i++) {
 
-    const itemHeight = estimateItemHeight(line.item);
+        const line = lines[i];
 
-    const isLastItem = index === lines.length - 1;
+        const itemHeight =
+            estimateItemHeight(line.item);
 
-    /*
-      যদি এই Item যোগ করলে Summary এর জায়গা না থাকে
-      তাহলে Next Page
-    */
+        const isLast =
+            i === lines.length - 1;
 
-   const reserveHeight =
-    isLastItem
-        ? LAST_SECTION_HEIGHT + 25
-        : 0;
+        /*
+        Item fit?
+        */
 
-    if (
-      usedHeight +
-        itemHeight +
-        reserveHeight >
-      PAGE_HEIGHT
-    ) {
+        if (
+            usedHeight +
+            itemHeight >
+            PAGE_HEIGHT
+        ) {
 
-      pages.push({
-        items: current,
-        isLast: false,
-      });
+            pages.push({
+                items: current,
+                isLast: false,
+            });
 
-      current = [];
+            current = [];
 
-      usedHeight = HEADER_HEIGHT;
+            usedHeight =
+                HEADER_HEIGHT +
+                TABLE_HEADER_HEIGHT;
+        }
+
+        current.push(line);
+
+        usedHeight += itemHeight;
+
+        /*
+        শেষ Item হলে
+        Summary + Signature + Footer
+        Fit হচ্ছে?
+        */
+
+        if (isLast) {
+
+            const remaining =
+PAGE_HEIGHT-usedHeight;
+
+const required =
+getLastSectionHeight(data);
+
+if (remaining < required) {
+
+                current.pop();
+
+                pages.push({
+                    items: current,
+                    isLast: false,
+                });
+
+                current = [line];
+
+                usedHeight =
+                    HEADER_HEIGHT +
+                    TABLE_HEADER_HEIGHT +
+                    itemHeight;
+            }
+        }
     }
 
-    current.push(line);
+    pages.push({
+        items: current,
+        isLast: true,
+    });
 
-    usedHeight += itemHeight;
-
-  });
-
-  pages.push({
-    items: current,
-    isLast: true,
-  });
-
-  return pages;
+    return pages;
 }
 
 
@@ -623,8 +677,11 @@ usedHeight += TABLE_HEADER_HEIGHT;
     const totals = useMemo(() => computeInvoiceTotals(data), [data]);
     const template = TEMPLATES[data.template];
     const pages = useMemo(() => {
-  return paginateInvoice(totals.lines);
-}, [totals.lines]);
+    return paginateInvoice(
+        totals.lines,
+        data
+    );
+}, [totals.lines, data]);
 
     const validate = useCallback((): string[] => {
       const errs: string[] = [];
@@ -1118,6 +1175,7 @@ pdf.addImage(
         flex: 1,
         display: "flex",
         flexDirection: "column",
+        minHeight: 0,
     }}
 >
               {/* Line items table */}
@@ -1162,7 +1220,7 @@ pdf.addImage(
                 <>
                 {/* Summary */}
                <div
-className="flex justify-end mt-auto mb-6"
+className="flex justify-end mb-6"
 style={{
     breakInside: "avoid",
     pageBreakInside: "avoid",
