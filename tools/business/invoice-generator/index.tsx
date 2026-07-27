@@ -296,7 +296,11 @@ interface InvoicePage {
 }
 
 function paginateInvoice(
-    lines,data: InvoiceData
+  lines: {
+    item: ProductLine;
+    calc: ReturnType<typeof computeItem>;
+  }[],
+  data: InvoiceData
 ): InvoicePage[] {
 
     const pages: InvoicePage[] = [];
