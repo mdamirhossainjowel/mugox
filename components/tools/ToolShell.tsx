@@ -82,11 +82,12 @@ export function ToolShell({ tool, relatedTools, children }: ToolShellProps) {
           </main>
 
           {/* Sidebar */}
-          <aside className="space-y-6">
-            <div className="lg:sticky lg:top-20">
-              <RelatedTools tools={relatedTools} />
-            </div>
-          </aside>
+         {/* Related Tools */}
+{relatedTools.length > 0 && (
+  <div className="mt-10 border-t border-[var(--mg-border)] pt-8">
+    <RelatedTools tools={relatedTools} />
+  </div>
+)}
         </div>
       </div>
     </>
