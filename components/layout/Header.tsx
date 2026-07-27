@@ -15,6 +15,7 @@ const navLinks = [
   { href: "/image", label: "Image" },
   { href: "/text", label: "Text" },
   { href: "/developer", label: "Dev" },
+  { href: "/calculator", label: "Calculator" },
 ];
 
 export function Header() {
