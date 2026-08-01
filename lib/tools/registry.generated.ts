@@ -5,7 +5,9 @@
 
 import type { ToolMeta } from "@/types";
 
+import barcodeGenerator from "@/tools/business/barcode-generator/meta";
 import invoiceGenerator from "@/tools/business/invoice-generator/meta";
+import qrCodeGenerator from "@/tools/business/qr-code-generator/meta";
 import ageCalculator from "@/tools/calculator/age-calculator/meta";
 import bmiCalculator from "@/tools/calculator/bmi-calculator/meta";
 import cgpaCalculator from "@/tools/calculator/cgpa-calculator/meta";
@@ -43,7 +45,9 @@ import wordCounter from "@/tools/text/word-counter/meta";
 import wordFormatter from "@/tools/word/word-formatter/meta";
 
 export const TOOL_REGISTRY: ToolMeta[] = [
+  barcodeGenerator,
   invoiceGenerator,
+  qrCodeGenerator,
   ageCalculator,
   bmiCalculator,
   cgpaCalculator,

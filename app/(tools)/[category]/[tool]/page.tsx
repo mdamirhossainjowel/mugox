@@ -54,6 +54,10 @@ const toolComponents: Record<string, React.ComponentType> = {
   "cgpa-calculator": dynamic(() => import("@/tools/calculator/cgpa-calculator"), { loading: () => <ToolLoadingState /> }),
   "time-calculator": dynamic(() => import("@/tools/calculator/time-calculator"), { loading: () => <ToolLoadingState /> }),
   "invoice-generator": dynamic(() => import("@/tools/business/invoice-generator"), { loading: () => <ToolLoadingState /> }),
+  "barcode-generator": dynamic(() => import("@/tools/business/barcode-generator"), { loading: () => <ToolLoadingState /> }),
+  "qr-code-generator": dynamic(() => import("@/tools/business/qr-code-generator"), { loading: () => <ToolLoadingState /> }),
+
+
 };
 
 function ToolLoadingState() {

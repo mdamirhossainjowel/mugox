@@ -11,7 +11,9 @@ import type { ComponentType } from "react";
 import { ToolLoadingState } from "@/components/tools/ToolLoadingState";
 
 export const TOOL_COMPONENTS: Record<string, ComponentType> = {
+  "barcode-generator": dynamic(() => import("@/tools/business/barcode-generator"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "invoice-generator": dynamic(() => import("@/tools/business/invoice-generator"), { ssr: false, loading: () => <ToolLoadingState /> }),
+  "qr-code-generator": dynamic(() => import("@/tools/business/qr-code-generator"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "age-calculator": dynamic(() => import("@/tools/calculator/age-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "bmi-calculator": dynamic(() => import("@/tools/calculator/bmi-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),
   "cgpa-calculator": dynamic(() => import("@/tools/calculator/cgpa-calculator"), { ssr: false, loading: () => <ToolLoadingState /> }),

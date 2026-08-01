@@ -1,15 +1,4 @@
-#!/usr/bin/env node
-/**
- * AUTO-DISCOVERS every tool under /tools and generates:
- *   - lib/tools/registry.generated.ts      (all ToolMeta entries, for SEO/sitemap/registry)
- *   - lib/tools/componentMap.generated.tsx (code-split dynamic() map, only for tools with a UI)
- *
- * This lets engineers add a tool by dropping a folder in /tools — no manual
- * registration, no import list to maintain by hand. Designed to scale to 5000+ tools.
- *
- * Runs automatically via "predev" / "prebuild" (see package.json).
- * Do not hand-edit the *.generated.* output files — they are overwritten every run.
- */
+
 import { readdirSync, statSync, existsSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 

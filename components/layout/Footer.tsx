@@ -11,6 +11,7 @@ const popularTools = [
   { slug: "json-formatter", category: "developer", title: "JSON Formatter" },
   { slug: "percentage-calculator", category: "calculator", title: "Percentage Calculator" },
   { slug: "bmi-calculator", category: "calculator", title: "BMI Calculator" },
+
 ];
 
 export function Footer() {

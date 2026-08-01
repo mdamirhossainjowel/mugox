@@ -20,6 +20,7 @@
     "file-saver": "^2.0.5",
     "fuse.js": "^7.0.0",
     "html2canvas": "^1.4.1",
+    "jsbarcode": "^3.12.3",
     "jspdf": "^4.2.1",
     "jszip": "^3.10.1",
     "lucide-react": "^0.469.0",
@@ -29,6 +30,7 @@
     "pdfjs-dist": "^6.1.200",
     "qrcode": "^1.5.4",
     "react": "19.2.7",
+    "react-colorful": "^5.8.0",
     "react-dom": "19.2.7",
     "tailwind-merge": "^2.5.5",
     "tesseract.js": "^7.0.0"

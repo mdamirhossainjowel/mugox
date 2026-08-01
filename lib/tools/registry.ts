@@ -43,11 +43,18 @@ import cgpaCalculator from "@/tools/calculator/cgpa-calculator/meta";
 import timeCalculator from "@/tools/calculator/time-calculator/meta";
 import invoiceGenerator from "@/tools/business/invoice-generator/meta";
 
+import barcodeGenerator from "@/tools/business/barcode-generator/meta";
+import qrcodeGenerator from "@/tools/business/qr-code-generator/meta";
+
+
+
 
 
 export const TOOL_REGISTRY: ToolMeta[] = [
 
   discountCalculator,
+  qrcodeGenerator,
+  barcodeGenerator,
   invoiceGenerator,
   gstVatCalculator,
   loanEmiCalculator,
