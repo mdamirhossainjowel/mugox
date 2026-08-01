@@ -7,6 +7,7 @@ export const EVENTS = {
   SEARCH_PERFORMED: "search_performed",
   RELATED_TOOL_CLICKED: "related_tool_clicked",
   FAQ_EXPANDED: "faq_expanded",
+  QR_GENERATED: "qr_generated",
 } as const;
 
 export function track(event: string, params?: Record<string, unknown>) {
